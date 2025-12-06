@@ -60,7 +60,7 @@ services:
         restart: always
         environment:
             MYSQL_ROOT_PASSWORD: rootpassword
-            MYSQL_DATABASE: it4409_shop
+            MYSQL_DATABASE: badminton_hub
         ports:
             - '6001:3306'
         command: --default-authentication-plugin=mysql_native_password
