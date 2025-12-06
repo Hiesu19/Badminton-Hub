@@ -1,0 +1,89 @@
+services:
+    # Kafka Controller
+    kafka-badminton-hub-controller:
+        image: apache/kafka:4.0.1
+        container_name: kafka-badminton-hub-controller
+        environment:
+            KAFKA_NODE_ID: 1
+            KAFKA_PROCESS_ROLES: controller
+            KAFKA_LISTENERS: CONTROLLER://:9093
+            KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+            KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+            KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-badminton-hub-controller:9093
+            KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+        volumes:
+            - kafka_controller_data:/var/lib/kafka/data
+        networks:
+            - mysql_data_badminton-hub-network
+        restart: always
+    # Kafka Broker
+    kafka-badminton-hub-broker:
+        image: apache/kafka:4.0.1
+        container_name: kafka-badminton-hub-broker
+        ports:
+            - '6004:9092'
+        environment:
+            KAFKA_NODE_ID: 4
+            KAFKA_PROCESS_ROLES: broker
+            KAFKA_LISTENERS: 'PLAINTEXT://:19092,PLAINTEXT_HOST://:9092'
+            KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-badminton-hub-broker:19092,PLAINTEXT_HOST://localhost:6004'
+            KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+            KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+            KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-badminton-hub-controller:9093
+            KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+        depends_on:
+            - kafka-badminton-hub-controller
+        networks:
+            - mysql_data_badminton-hub-network
+        restart: always
+
+    # Kafka UI
+    kafka-badminton-hub-ui:
+        container_name: kafka-badminton-hub-ui
+        image: provectuslabs/kafka-ui:latest
+        ports:
+            - '6003:8080'
+        environment:
+            - KAFKA_CLUSTERS_0_NAME=Hello
+            - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka-badminton-hub-broker:19092
+        depends_on:
+            - kafka-badminton-hub-broker
+        networks:
+            - mysql_data_badminton-hub-network
+        restart: always
+
+    # MySQL
+    mysql:
+        image: mysql:8.0.39
+        container_name: mysql_data_badminton-hub-mysql
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword
+            MYSQL_DATABASE: it4409_shop
+        ports:
+            - '6001:3306'
+        command: --default-authentication-plugin=mysql_native_password
+        volumes:
+            - mysql_data_mysql_data_badminton-hub:/var/lib/mysql
+        networks:
+            - mysql_data_badminton-hub-network
+
+    # Redis
+    redis:
+        image: redis:latest
+        container_name: mysql_data_badminton-hub-redis
+        restart: always
+        ports:
+            - '6002:6379'
+        command: ['redis-server', '--appendonly', 'no']
+        networks:
+            - mysql_data_badminton-hub-network
+
+volumes:
+    kafka_controller_data:
+    mysql_data_mysql_data_badminton-hub:
+
+networks:
+    mysql_data_badminton-hub-network:
+        driver: bridge
