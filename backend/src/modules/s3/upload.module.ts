@@ -1,0 +1,12 @@
+import { Module } from '@nestjs/common';
+import { S3Service } from './s3.service';
+import { UploadController } from './upload.controller';
+import { UploadService } from './upload.service';
+import { JwtModule } from '@nestjs/jwt';
+
+@Module({
+    imports: [JwtModule],
+    controllers: [UploadController],
+    providers: [UploadService, S3Service],
+})
+export class UploadModule {}
