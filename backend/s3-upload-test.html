@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Test upload ảnh S3 - Mô phỏng Form Data</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 16px;
+        line-height: 1.5;
+        background-color: #f7f7f7;
+      }
+      fieldset {
+        margin-bottom: 24px;
+        padding: 16px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      legend {
+        padding: 0 10px;
+        font-weight: bold;
+        color: #333;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #555;
+      }
+      input,
+      select {
+        padding: 8px 10px;
+        margin-top: 4px;
+        width: 100%;
+        max-width: 400px;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      input[type='file'] {
+        border: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      button {
+        padding: 10px 20px;
+        margin-top: 16px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      button:disabled {
+        background-color: #a0c9f1;
+        cursor: not-allowed;
+      }
+      pre {
+        background: #e9ecef;
+        color: #333;
+        padding: 12px;
+        overflow-x: auto;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        margin-top: 8px;
+      }
+      .error {
+        color: #dc3545;
+        font-weight: bold;
+      }
+      .success {
+        color: #28a745;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Test upload ảnh S3 - Mô phỏng Form Data</h1>
+    <p>
+      Quy trình: 1. Lấy Presigned URL/Fields (Backend). 2. Gán tất cả **Fields**
+      và **File** vào **FormData** rồi POST trực tiếp lên S3.
+    </p>
+
+    <fieldset>
+      <legend>Cấu hình Backend & Xác thực</legend>
+      <label>
+        Backend base URL
+        <input
+          id="backendUrl"
+          value="http://localhost:6000"
+          placeholder="http://localhost:6000"
+        />
+      </label>
+      <label>
+        JWT Access Token (Bearer)
+        <input id="accessToken" placeholder="Dán access token vào đây" />
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Chọn loại upload & File</legend>
+      <label>
+        Loại:
+        <select id="uploadType">
+          <option value="avatar">Avatar user</option>
+          <option value="gallery">Ảnh gallery sân (owner)</option>
+          <option value="main">Ảnh đại diện sân (owner)</option>
+          <option value="banner">Ảnh banner sân (owner)</option>
+        </select>
+      </label>
+
+      <label id="courtIdLabel" style="display: none">
+        ID sân (supperCourtId)
+        <input id="supperCourtId" placeholder="VD: 1" type="number" min="1" />
+      </label>
+
+      <label id="positionLabel" style="display: none">
+        Vị trí ảnh (gallery position)
+        <input id="position" type="number" value="1" min="0" />
+      </label>
+
+      <label>
+        Chọn file ảnh
+        <input id="fileInput" type="file" accept="image/jpeg,image/png" />
+      </label>
+
+      <button id="btnUpload">Upload</button>
+    </fieldset>
+
+    <h2>Kết quả</h2>
+    <div>
+      <strong>Response presigned (từ backend):</strong>
+      <pre id="presignedResult"></pre>
+    </div>
+    <div>
+      <strong>Kết quả upload lên S3:</strong>
+      <pre id="uploadResult"></pre>
+    </div>
+    <div>
+      <strong>Public URL:</strong>
+      <pre id="publicUrl"></pre>
+    </div>
+
+    <script>
+      const uploadTypeEl = document.getElementById('uploadType');
+      const courtIdLabel = document.getElementById('courtIdLabel');
+      const positionLabel = document.getElementById('positionLabel');
+      const btnUploadEl = document.getElementById('btnUpload');
+
+      // Logic hiển thị input dựa trên loại upload
+      const updateFormFields = () => {
+        const type = uploadTypeEl.value;
+        if (type === 'avatar') {
+          courtIdLabel.style.display = 'none';
+          positionLabel.style.display = 'none';
+        } else if (type === 'gallery') {
+          courtIdLabel.style.display = 'block';
+          positionLabel.style.display = 'block';
+        } else {
+          // main, banner
+          courtIdLabel.style.display = 'block';
+          positionLabel.style.display = 'none';
+        }
+      };
+
+      uploadTypeEl.addEventListener('change', updateFormFields);
+      updateFormFields();
+
+      btnUploadEl.addEventListener('click', async () => {
+        // Lấy giá trị input
+        const backendUrl = document.getElementById('backendUrl').value.trim();
+        const token = document.getElementById('accessToken').value.trim();
+        const fileInput = document.getElementById('fileInput');
+        const type = uploadTypeEl.value;
+        const supperCourtIdInput = document.getElementById('supperCourtId');
+        const positionInput = document.getElementById('position');
+
+        const supperCourtId = supperCourtIdInput.value.trim();
+        const position = positionInput.value.trim();
+
+        // Element hiển thị kết quả
+        const presignedResultEl = document.getElementById('presignedResult');
+        const uploadResultEl = document.getElementById('uploadResult');
+        const publicUrlEl = document.getElementById('publicUrl');
+
+        // Reset và vô hiệu hóa nút
+        presignedResultEl.textContent = '';
+        uploadResultEl.textContent = '';
+        publicUrlEl.textContent = '';
+        btnUploadEl.disabled = true;
+        btnUploadEl.textContent = 'Đang Upload...';
+
+        // Kiểm tra đầu vào cơ bản
+        if (!backendUrl || !fileInput.files || fileInput.files.length === 0) {
+          uploadResultEl.innerHTML =
+            '<span class="error">Lỗi: Vui lòng nhập URL backend và chọn file ảnh.</span>';
+          btnUploadEl.disabled = false;
+          btnUploadEl.textContent = 'Upload';
+          return;
+        }
+
+        const file = fileInput.files[0];
+        const contentType = file.type || 'image/jpeg';
+        let endpoint = '';
+        let body = {};
+
+        // 1. Chuẩn bị Request Body cho Backend
+        // (Logic xác định endpoint và body giống phiên bản trước)
+        if (type === 'avatar') {
+          endpoint = '/uploads/presigned-avatar-image';
+          body = { contentType };
+        } else {
+          if (!supperCourtId || isNaN(Number(supperCourtId))) {
+            uploadResultEl.innerHTML =
+              '<span class="error">Lỗi: ID sân không hợp lệ</span>';
+            btnUploadEl.disabled = false;
+            btnUploadEl.textContent = 'Upload';
+            return;
+          }
+          const courtIdNum = Number(supperCourtId);
+          if (type === 'gallery') {
+            endpoint = '/uploads/presigned-supper-court-gallery-image';
+            body = {
+              supperCourtId: courtIdNum,
+              contentType,
+              position: Number(position) || 0,
+            };
+          } else if (type === 'main') {
+            endpoint = '/uploads/presigned-supper-court-main-image';
+            body = { supperCourtId: courtIdNum, contentType };
+          } else if (type === 'banner') {
+            endpoint = '/uploads/presigned-supper-court-banner-image';
+            body = { supperCourtId: courtIdNum, contentType };
+          }
+        }
+
+        try {
+          // 2. Gọi Backend để lấy Presigned Data
+          const res = await fetch(backendUrl + endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: 'Bearer ' + token } : {}),
+            },
+            body: JSON.stringify(body),
+          });
+
+          const json = await res.json();
+          presignedResultEl.textContent = JSON.stringify(json, null, 2);
+
+          if (!res.ok) {
+            throw new Error(
+              'Backend trả lỗi: ' + (json?.message || res.statusText),
+            );
+          }
+
+          const data = json.data || json;
+          if (!data.url || !data.fields) {
+            throw new Error(
+              'Dữ liệu presigned không hợp lệ: Thiếu url hoặc fields',
+            );
+          }
+
+          // 3. Chuẩn bị và Upload trực tiếp lên S3
+          const formData = new FormData();
+
+          // QUAN TRỌNG: GÁN TẤT CẢ CÁC TRƯỜNG TRONG data.fields VÀO formData (LÀ CÁC TRƯỜNG TEXT)
+          // Tương đương với việc bạn đặt Key/Value trong form-data tool
+          Object.entries(data.fields).forEach(([key, value]) => {
+            formData.append(key, value);
+          });
+
+          // GÁN FILE ẢNH VÀO formData (LÀ TRƯỜNG FILE CUỐI CÙNG)
+          // Tương đương với trường 'file' trong hình ảnh của bạn
+          formData.append('file', file);
+
+          const s3Res = await fetch(data.url, {
+            method: 'POST',
+            body: formData, // Trình duyệt sẽ tự tạo header Content-Type: multipart/form-data
+          });
+
+          const s3Text = await s3Res.text();
+
+          // Kiểm tra kết quả S3 (204 No Content là thành công)
+          if (s3Res.status >= 200 && s3Res.status < 300) {
+            uploadResultEl.innerHTML =
+              '<span class="success">Upload S3 thành công! Status: ' +
+              s3Res.status +
+              '</span>';
+          } else {
+            uploadResultEl.innerHTML =
+              '<span class="error">Upload S3 thất bại! Status: ' +
+              s3Res.status +
+              '</span><pre>' +
+              s3Text +
+              '</pre>';
+            throw new Error('Upload S3 thất bại với status: ' + s3Res.status);
+          }
+
+          if (data.publicUrl) {
+            publicUrlEl.textContent = data.publicUrl;
+          }
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          if (!uploadResultEl.textContent.includes('thất bại')) {
+            uploadResultEl.innerHTML =
+              '<span class="error">Lỗi trong quá trình xử lý:</span> ' +
+              errorMessage;
+          }
+        } finally {
+          btnUploadEl.disabled = false;
+          btnUploadEl.textContent = 'Upload';
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -3,23 +3,25 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { CacheService } from './cache.service';
 import { BusinessCacheRepository } from './business-cache.repository';
 import KeyvRedis from '@keyv/redis';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Global()
 @Module({
     imports: [
+        ConfigModule,
         CacheModule.registerAsync({
             isGlobal: true,
-            useFactory: async () => {
-                const redisUrl = process.env.REDIS_URL;
+            inject: [ConfigService],
+            useFactory: async (configService: ConfigService) => {
+                const explicitUrl = configService.get<string>('REDIS_URL');
+                const host = configService.get<string>('REDIS_HOST', 'localhost');
+                const port = configService.get<number>('REDIS_PORT', 6002);
+
+                const redisUrl =
+                    explicitUrl || `redis://${host}:${port}`;
+
                 return {
-                    stores: [
-                        // new Keyv({
-                        //     store: new CacheableMemory({
-                        //         ttl: 5 * 1000,
-                        //     }),
-                        // }),
-                        new KeyvRedis(redisUrl),
-                    ],
+                    stores: [new KeyvRedis(redisUrl)],
                     ttl: 5 * 1000,
                 };
             },

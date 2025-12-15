@@ -1,163 +1,172 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { S3Service } from './s3.service';
-import { PresignedProductImageDto } from './dto/presigned-product-image.dto';
+import { PresignedSupperCourtGalleryImageDto } from './dto/presigned-product-image.dto';
 import { PresignedAvatarImageDto } from './dto/presigned-avatar-image.dto';
-import { PresignedCategoryImageDto } from './dto/presigned-categrory-image.dto';
-import { PresignedBrandImageDto } from './dto/presigned-brand-image.dto';
+import { PresignedSupperCourtMainImageDto } from './dto/presigned-categrory-image.dto';
+import { PresignedSupperCourtBannerImageDto } from './dto/presigned-brand-image.dto';
 
 @Injectable()
 export class UploadService {
-    constructor(private readonly s3Service: S3Service) {}
+  constructor(private readonly s3Service: S3Service) {}
 
-    private getExtensionFromContentType(contentType: string): string | null {
-        switch (contentType) {
-            case 'image/jpeg':
-                return '.jpg';
-            case 'image/jpg':
-                return '.jpg';
-            case 'image/png':
-                return '.png';
-            default:
-                return null;
-        }
+  private getExtensionFromContentType(contentType: string): string | null {
+    switch (contentType) {
+      case 'image/jpeg':
+        return '.jpg';
+      case 'image/jpg':
+        return '.jpg';
+      case 'image/png':
+        return '.png';
+      default:
+        return null;
+    }
+  }
+
+  // Lấy URL upload ảnh gallery cho sân
+  async getPresignedSupperCourtGalleryImageUrl(
+    body: PresignedSupperCourtGalleryImageDto,
+  ) {
+    const { supperCourtId, contentType, position } = body;
+
+    const extension = this.getExtensionFromContentType(contentType);
+    if (!extension) {
+      throw new BadRequestException('ContentType không hợp lệ');
     }
 
-    async getPresignedProductImageUrl(body: PresignedProductImageDto) {
-        const { productId, contentType, position } = body;
+    const s3Key = `supper-courts/${supperCourtId}/gallery-${position}${extension}`;
 
-        const extension = this.getExtensionFromContentType(contentType);
-        if (!extension) {
-            throw new BadRequestException('ContentType không hợp lệ');
-        }
+    try {
+      const { url, fields } = await this.s3Service.getPresignedPostUrl(
+        s3Key,
+        contentType,
+      );
 
-        const s3Key = `products/${productId}/${position}${extension}`;
+      return {
+        url,
+        fields,
+        publicUrl: this.s3Service.getPublicUrl(s3Key),
+        key: s3Key,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Không thể tạo presigned supper court gallery image URL';
+      throw new BadRequestException(message);
+    }
+  }
 
-        try {
-            const { url, fields } = await this.s3Service.getPresignedPostUrl(
-                s3Key,
-                contentType,
-            );
+  async getPresignedAvatarImageUrl(
+    userId: string,
+    body: PresignedAvatarImageDto,
+  ) {
+    const { contentType } = body;
 
-            return {
-                url,
-                fields,
-                publicUrl: this.s3Service.getPublicUrl(s3Key),
-                key: s3Key,
-            };
-        } catch (error) {
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-            const message =
-                error instanceof Error
-                    ? error.message
-                    : 'Không thể tạo presigned product image URL';
-            throw new BadRequestException(message);
-        }
+    const extension = this.getExtensionFromContentType(contentType);
+    if (!extension) {
+      throw new BadRequestException('ContentType không hợp lệ');
     }
 
-    async getPresignedAvatarImageUrl(
-        userId: string,
-        body: PresignedAvatarImageDto,
-    ) {
-        const { contentType } = body;
+    const s3Key = `users/${userId}/avatar${extension}`;
 
-        const extension = this.getExtensionFromContentType(contentType);
-        if (!extension) {
-            throw new BadRequestException('ContentType không hợp lệ');
-        }
+    try {
+      const { url, fields } = await this.s3Service.getPresignedPostUrl(
+        s3Key,
+        contentType,
+      );
 
-        const s3Key = `users/${userId}/avatar${extension}`;
+      return {
+        url,
+        fields,
+        publicUrl: this.s3Service.getPublicUrl(s3Key),
+        key: s3Key,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Không thể tạo presigned avatar image URL';
+      throw new BadRequestException(message);
+    }
+  }
 
-        try {
-            const { url, fields } = await this.s3Service.getPresignedPostUrl(
-                s3Key,
-                contentType,
-            );
+  // Lấy URL upload ảnh đại diện sân
+  async getPresignedSupperCourtMainImageUrl(
+    body: PresignedSupperCourtMainImageDto,
+  ) {
+    const { supperCourtId, contentType } = body;
 
-            return {
-                url,
-                fields,
-                publicUrl: this.s3Service.getPublicUrl(s3Key),
-                key: s3Key,
-            };
-        } catch (error) {
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-            const message =
-                error instanceof Error
-                    ? error.message
-                    : 'Không thể tạo presigned avatar image URL';
-            throw new BadRequestException(message);
-        }
+    const extension = this.getExtensionFromContentType(contentType);
+    if (!extension) {
+      throw new BadRequestException('ContentType không hợp lệ');
     }
 
-    async getPresignedCategoryImageUrl(body: PresignedCategoryImageDto) {
-        const { categoryId, contentType } = body;
+    const s3Key = `supper-courts/${supperCourtId}/main${extension}`;
 
-        const extension = this.getExtensionFromContentType(contentType);
-        if (!extension) {
-            throw new BadRequestException('ContentType không hợp lệ');
-        }
+    try {
+      const { url, fields } = await this.s3Service.getPresignedPostUrl(
+        s3Key,
+        contentType,
+      );
 
-        const s3Key = `categories/${categoryId}/image${extension}`;
+      return {
+        url,
+        fields,
+        publicUrl: this.s3Service.getPublicUrl(s3Key),
+        key: s3Key,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Không thể tạo presigned supper court main image URL';
+      throw new BadRequestException(message);
+    }
+  }
 
-        try {
-            const { url, fields } = await this.s3Service.getPresignedPostUrl(
-                s3Key,
-                contentType,
-            );
+  // Lấy URL upload banner sân
+  async getPresignedSupperCourtBannerImageUrl(
+    body: PresignedSupperCourtBannerImageDto,
+  ) {
+    const { supperCourtId, contentType } = body;
 
-            return {
-                url,
-                fields,
-                publicUrl: this.s3Service.getPublicUrl(s3Key),
-                key: s3Key,
-            };
-        } catch (error) {
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-            const message =
-                error instanceof Error
-                    ? error.message
-                    : 'Không thể tạo presigned category image URL';
-            throw new BadRequestException(message);
-        }
+    const extension = this.getExtensionFromContentType(contentType);
+    if (!extension) {
+      throw new BadRequestException('ContentType không hợp lệ');
     }
 
-    async getPresignedBrandImageUrl(body: PresignedBrandImageDto) {
-        const { brandId, contentType } = body;
+    const s3Key = `supper-courts/${supperCourtId}/banner${extension}`;
 
-        const extension = this.getExtensionFromContentType(contentType);
-        if (!extension) {
-            throw new BadRequestException('ContentType không hợp lệ');
-        }
+    try {
+      const { url, fields } = await this.s3Service.getPresignedPostUrl(
+        s3Key,
+        contentType,
+      );
 
-        const s3Key = `brands/${brandId}/image${extension}`;
-
-        try {
-            const { url, fields } = await this.s3Service.getPresignedPostUrl(
-                s3Key,
-                contentType,
-            );
-
-            return {
-                url,
-                fields,
-                publicUrl: this.s3Service.getPublicUrl(s3Key),
-                key: s3Key,
-            };
-        } catch (error) {
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-            const message =
-                error instanceof Error
-                    ? error.message
-                    : 'Không thể tạo presigned category image URL';
-            throw new BadRequestException(message);
-        }
+      return {
+        url,
+        fields,
+        publicUrl: this.s3Service.getPublicUrl(s3Key),
+        key: s3Key,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Không thể tạo presigned supper court banner image URL';
+      throw new BadRequestException(message);
     }
+  }
 }

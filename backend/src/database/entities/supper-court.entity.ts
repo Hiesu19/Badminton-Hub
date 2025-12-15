@@ -9,6 +9,8 @@ import {
 import { ImageEntity } from './court-image.entity';
 import { ImageDefaultEnum } from '../../shared/enums/image.enum';
 import { UserEntity } from './user.entity';
+import { SubCourtEntity } from './sub-court.entity';
+import { SupperCourtPriceEntity } from './price-court.entity';
 
 @Entity('supper_courts')
 export class SupperCourtEntity {
@@ -33,6 +35,9 @@ export class SupperCourtEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   website: string;
 
+  @OneToMany(() => SupperCourtPriceEntity, (price) => price.supperCourt)
+  prices: SupperCourtPriceEntity[];
+
   @Column({ name: 'bank_name', type: 'varchar', length: 255 })
   bankName: string;
 
@@ -51,7 +56,10 @@ export class SupperCourtEntity {
   @OneToMany(() => ImageEntity, (image) => image.supperCourt)
   images: ImageEntity[];
 
-  @OneToOne(() => UserEntity, (user) => user.id, {
+  @OneToMany(() => SubCourtEntity, (sub) => sub.supperCourt)
+  subCourts: SubCourtEntity[];
+
+  @OneToOne(() => UserEntity, {
     nullable: true,
     onDelete: 'CASCADE',
   })

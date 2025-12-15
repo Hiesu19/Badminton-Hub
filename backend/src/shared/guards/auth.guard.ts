@@ -6,12 +6,14 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { BusinessCacheRepository } from 'src/modules/redis/business-cache.repository';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private businessCacheRepository: BusinessCacheRepository,
+    private configService: ConfigService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -32,11 +34,12 @@ export class AuthGuard implements CanActivate {
 
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_ACCESS_KEY || process.env.JWT_SECRET,
+        secret:
+          this.configService.get<string>('JWT_ACCESS_KEY')
       });
 
       const cachedTokenVersion =
-        await this.businessCacheRepository.getTokenVersion(payload.id);
+        await this.businessCacheRepository.getTokenVersion(String(payload.id));
       if (payload.tokenVersion !== Number(cachedTokenVersion)) {
         throw new UnauthorizedException('Token không hợp lệ');
       }

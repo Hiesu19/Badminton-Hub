@@ -1,9 +1,25 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { CustomCacheModule } from './modules/redis/custom-cache.module';
+import { ResponseInterceptor } from './shared/interceptors/response.interceptor';
+import { UserModule } from './modules/user/user.module';
+import { UploadModule } from './modules/s3/upload.module';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    DatabaseModule,
+    CustomCacheModule,
+    AuthModule,
+    UserModule,
+    UploadModule,
+  ],
   controllers: [],
-  providers: [],
+  providers: [ResponseInterceptor],
 })
 export class AppModule {}

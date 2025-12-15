@@ -4,14 +4,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
-  OneToOne,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
-import { SupperCourtEntity } from './supper-court.entity';
 
 @Entity('users')
+@Unique(['email', 'role'])
 export class UserEntity {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
@@ -25,14 +24,17 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 255 })
   password: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  phone: string;
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
+  phone: string | null;
 
-  @Column({ type: 'enum', enum: UserRole })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole = UserRole.USER;
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean = true;
+
+  @Column({ type: 'int', name: 'token_version', default: 1 })
+  tokenVersion: number;
 
   @Column({
     name: 'avatar_url',
@@ -57,6 +59,8 @@ export class UserEntity {
   })
   updatedAt: Date;
 
-
-    // -----------------------------
+  // -----------------------------
 }
+
+// Alias để các module có thể import `User` (giống code hiện tại)
+export { UserEntity as User };
