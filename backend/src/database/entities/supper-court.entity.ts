@@ -11,6 +11,7 @@ import { ImageDefaultEnum } from '../../shared/enums/image.enum';
 import { UserEntity } from './user.entity';
 import { SubCourtEntity } from './sub-court.entity';
 import { SupperCourtPriceEntity } from './price-court.entity';
+import { SupperCourtStatus } from '../../shared/enums/supper-court.enum';
 
 @Entity('supper_courts')
 export class SupperCourtEntity {
@@ -19,6 +20,12 @@ export class SupperCourtEntity {
 
   @Column({ type: 'varchar', length: 255 })
   name: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  description: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  status: SupperCourtStatus = SupperCourtStatus.VERIFYING;
 
   @Column({ type: 'varchar', length: 255 })
   address: string;

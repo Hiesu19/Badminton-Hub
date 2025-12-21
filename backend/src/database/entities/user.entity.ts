@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 
 @Entity('users')
-@Unique(['email', 'role'])
+@Unique(['email', 'role', 'phone'])
 export class UserEntity {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
@@ -24,7 +24,7 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 255 })
   password: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
+  @Column({ type: 'varchar', length: 255 })
   phone: string | null;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
