@@ -6,6 +6,7 @@ import { CustomCacheModule } from './modules/redis/custom-cache.module';
 import { ResponseInterceptor } from './shared/interceptors/response.interceptor';
 import { UserModule } from './modules/user/user.module';
 import { UploadModule } from './modules/s3/upload.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UploadModule } from './modules/s3/upload.module';
     AuthModule,
     UserModule,
     UploadModule,
+    AdminModule,
   ],
   controllers: [],
   providers: [ResponseInterceptor],
