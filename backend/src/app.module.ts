@@ -8,6 +8,7 @@ import { UserModule } from './modules/user/user.module';
 import { UploadModule } from './modules/s3/upload.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SupperCourtModule } from './modules/supper-court/supper-court.module';
+import { OwnerModule } from './modules/owner/owner.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { SupperCourtModule } from './modules/supper-court/supper-court.module';
     UploadModule,
     AdminModule,
     SupperCourtModule,
+    OwnerModule,
   ],
   controllers: [],
   providers: [ResponseInterceptor],

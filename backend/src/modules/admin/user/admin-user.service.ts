@@ -56,12 +56,30 @@ export class AdminUserService {
    * Sinh mật khẩu ngẫu nhiên cho owner
    */
   private generateRandomPassword(length = 10): string {
-    const chars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%!&*';
+    const chars1 =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const chars2 =
+      'abcdefghijklmnopqrstuvwxyz';
+    const chars3 =
+      '0123456789';
+    const chars4 =
+      '@#';
     let password = '';
-    for (let i = 0; i < length; i++) {
-      const idx = Math.floor(Math.random() * chars.length);
-      password += chars[idx];
+    for (let i = 0; i < 2; i++) {
+      const idx = Math.floor(Math.random() * chars1.length);
+      password += chars1[idx];
+    }
+    for (let i = 0; i < 2; i++) {
+      const idx = Math.floor(Math.random() * chars2.length);
+      password += chars2[idx];
+    }
+    for (let i = 0; i < length-6; i++) {
+      const idx = Math.floor(Math.random() * chars3.length);
+      password += chars3[idx];
+    }
+    for (let i = 0; i < 2; i++) {
+      const idx = Math.floor(Math.random() * chars4.length);
+      password += chars4[idx];
     }
     return password;
   }
