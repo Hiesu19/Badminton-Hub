@@ -1,0 +1,193 @@
+import React, { useState } from 'react';
+import {
+  Box,
+  CssBaseline,
+  Drawer,
+  Toolbar,
+  AppBar,
+  Typography,
+  IconButton,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+
+const drawerWidth = 260;
+
+const COLORS = {
+  pageBg: '#f5f8f5',
+  sidebarBg: '#e3f4df',
+  sidebarBorder: '#d0e4cf',
+  sidebarHeaderBg: '#d6f0d1',
+  sidebarText: '#2f5d3b',
+  appBarBorder: '#e0e7e4',
+  contentBg: '#f9fbf8',
+};
+
+/**
+ * Layout dùng chung cho toàn bộ app
+ * - Sidebar bên trái (Permanent trên desktop, Temporary trên mobile)
+ * - Nội dung chính bên phải, cuộn độc lập
+ * - Màu chủ đạo: trắng + xanh trà (green tea)
+ *
+ * Gợi ý:
+ * - Active state: xử lý bên trong `sidebar` (dùng MUI ListItemButton với prop `selected`).
+ * - Slim mode: có thể mở rộng sau bằng 1 prop (ví dụ `mini`) để thu gọn Drawer.
+ *
+ * @param {object} props
+ * @param {React.ReactNode} props.sidebar - Nội dung sidebar (menu, avatar, ...)
+ * @param {React.ReactNode} props.children - Nội dung chính trang
+ */
+export default function MainLayout({ sidebar, children }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleToggleDrawer = () => {
+    setMobileOpen((prev) => !prev);
+  };
+
+  const drawerContent = (
+    <>
+      <Toolbar
+        sx={{
+          minHeight: 64,
+          px: 2.5,
+          borderBottom: `1px solid ${COLORS.sidebarBorder}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          bgcolor: COLORS.sidebarHeaderBg,
+        }}
+      >
+        <Typography
+          variant="h6"
+          noWrap
+          sx={{
+            fontWeight: 700,
+            color: COLORS.sidebarText,
+          }}
+        >
+          Badminton Hub
+        </Typography>
+      </Toolbar>
+      <Box sx={{ p: 2, overflowY: 'auto', height: '100%' }}>{sidebar}</Box>
+    </>
+  );
+
+  return (
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: COLORS.pageBg }}>
+      <CssBaseline />
+
+      {/* Sidebar desktop - Permanent */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', sm: 'block' },
+          width: drawerWidth,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            bgcolor: COLORS.sidebarBg,
+            borderRight: `1px solid ${COLORS.sidebarBorder}`,
+          },
+        }}
+        open
+      >
+        {drawerContent}
+      </Drawer>
+
+      {/* Sidebar mobile - Temporary */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={handleToggleDrawer}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            bgcolor: COLORS.sidebarBg,
+            borderRight: `1px solid ${COLORS.sidebarBorder}`,
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+
+      {/* Khu vực nội dung chính */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          bgcolor: '#ffffff',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {/* AppBar mỏng phía trên nội dung, tone trắng + viền xanh nhạt */}
+        <AppBar
+          position="static"
+          elevation={0}
+          sx={{
+            bgcolor: '#ffffff',
+            borderBottom: `1px solid ${COLORS.appBarBorder}`,
+            color: COLORS.sidebarText,
+          }}
+        >
+          <Toolbar
+            sx={{
+              minHeight: 64,
+              px: 3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              {/* Nút mở sidebar trên mobile */}
+              {isMobile && (
+                <IconButton
+                  edge="start"
+                  color="inherit"
+                  aria-label="open drawer"
+                  onClick={handleToggleDrawer}
+                >
+                  {/* Dùng ký tự ☰ để tránh phụ thuộc @mui/icons-material */}
+                  <Typography component="span" sx={{ fontSize: 22 }}>
+                    ☰
+                  </Typography>
+                </IconButton>
+              )}
+
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                }}
+              >
+                Dashboard
+              </Typography>
+            </Box>
+
+            {/* Chỗ này bạn có thể truyền thêm action bên phải (user menu, nút, v.v) bằng cách thêm prop sau */}
+          </Toolbar>
+        </AppBar>
+
+        <Box
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            bgcolor: COLORS.contentBg,
+          }}
+        >
+          {children}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
