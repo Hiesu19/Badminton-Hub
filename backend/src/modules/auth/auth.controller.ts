@@ -19,7 +19,6 @@ import { VerifyForgotPasswordDto } from './dto/verify-forgot-password.dto';
 import { AllAuth } from 'src/shared/decorators/role-auth.decorator';
 import { CustomResponse } from 'src/shared/decorators/custom-response.decorator';
 import { LoginResponseDto } from './dto/login-response.dto';
-import { LoginAdminResponseDto } from './dto/login-admin-response.dto';
 import { RefreshTokenResponseDto } from './dto/refresh-token-response.dto';
 
 @Controller('/auth')
@@ -68,7 +67,7 @@ export class AuthController {
     }
 
     @Post('login-owner')
-    @CustomResponse(LoginAdminResponseDto, {
+    @CustomResponse(LoginResponseDto, {
         code: 201,
         message: 'Đăng nhập thành công',
         description: '[owner] Đăng nhập cho tài khoản chủ sân',
@@ -79,7 +78,7 @@ export class AuthController {
     }
 
     @Post('login-super-admin')
-    @CustomResponse(LoginAdminResponseDto, {
+    @CustomResponse(LoginResponseDto, {
         code: 201,
         message: 'Đăng nhập thành công',
         description: '[super_admin] Đăng nhập cho tài khoản super admin',

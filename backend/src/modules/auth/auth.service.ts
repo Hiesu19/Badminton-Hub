@@ -195,10 +195,8 @@ export class AuthService {
       tokenVersion: tokenVersionToUse,
       role: findUser.role,
     };
-    const accessSecret =
-      this.configService.get<string>('JWT_ACCESS_KEY');
-    const refreshSecret =
-      this.configService.get<string>('JWT_REFRESH_KEY');
+    const accessSecret = this.configService.get<string>('JWT_ACCESS_KEY');
+    const refreshSecret = this.configService.get<string>('JWT_REFRESH_KEY');
 
     const accessToken = this.jwtService.sign(payload, {
       secret: accessSecret,
@@ -209,7 +207,17 @@ export class AuthService {
       expiresIn: '7d',
     });
 
-    return { accessToken, refreshToken };
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: String(findUser.id),
+        role: findUser.role,
+        email: findUser.email,
+        avatarUrl: findUser.avatarUrl,
+        fullName: findUser.name,
+      },
+    };
   }
 
   // Đăng nhập cho user (người dùng đặt sân)
@@ -231,8 +239,7 @@ export class AuthService {
     let userJwt: any;
 
     try {
-      const refreshSecret =
-        this.configService.get<string>('JWT_REFRESH_KEY');
+      const refreshSecret = this.configService.get<string>('JWT_REFRESH_KEY');
 
       userJwt = await this.jwtService.verifyAsync(refreshToken, {
         secret: refreshSecret,
@@ -267,8 +274,7 @@ export class AuthService {
 
   async refresh_token(oldRefreshToken: string) {
     try {
-      const refreshSecret =
-        this.configService.get<string>('JWT_REFRESH_KEY');
+      const refreshSecret = this.configService.get<string>('JWT_REFRESH_KEY');
 
       const userJwt = this.jwtService.verify(oldRefreshToken, {
         secret: refreshSecret,
