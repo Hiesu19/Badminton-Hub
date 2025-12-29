@@ -7,13 +7,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import api from '../api/axiosInstance.js';
-
-const ENDPOINT_BY_SITE = {
-  client: '/auth/login',
-  owner: '/auth/login-owner',
-  admin: '/auth/login-super-admin',
-};
+import { loginWithEmailPassword } from '../services/authService.js';
 
 export default function AuthLoginForm({ site = 'client', onSuccess, title }) {
   const [email, setEmail] = useState('');
@@ -27,19 +21,12 @@ export default function AuthLoginForm({ site = 'client', onSuccess, title }) {
     setLoading(true);
 
     try {
-      const endpoint = ENDPOINT_BY_SITE[site] ?? ENDPOINT_BY_SITE.client;
-      const { data } = await api.post(endpoint, { email, password });
-      const payload = data.data ?? data;
-
-      if (payload.accessToken && payload.refreshToken) {
-        localStorage.setItem('accessToken', payload.accessToken);
-        localStorage.setItem('refreshToken', payload.refreshToken);
-      }
+      const result = await loginWithEmailPassword({ email, password, site });
 
       if (onSuccess) {
         onSuccess({
-          accessToken: payload.accessToken,
-          refreshToken: payload.refreshToken,
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
         });
       }
     } catch (err) {

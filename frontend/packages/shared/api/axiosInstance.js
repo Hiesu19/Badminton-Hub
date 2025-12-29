@@ -12,28 +12,32 @@ const onRerfreshed = (token) => {
   refreshSubscribers = [];
 };
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6501';
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_URL,
 });
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const { config, response: { status } } = error;
+    const {
+      config,
+      response: { status },
+    } = error;
     const originalRequest = config;
 
     if (status === 401) {
       if (!isRefreshing) {
         isRefreshing = true;
         try {
-          const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
-            refreshToken: localStorage.getItem('refreshToken')
+          const { data } = await axios.post(`${API_URL}/auth/refresh`, {
+            refreshToken: localStorage.getItem('refreshToken'),
           });
-          
+
           const newToken = data.accessToken;
           localStorage.setItem('accessToken', newToken);
           isRefreshing = false;
-          
+
           onRerfreshed(newToken);
         } catch (err) {
           isRefreshing = false;
@@ -51,7 +55,7 @@ api.interceptors.response.use(
       });
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

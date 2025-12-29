@@ -7,7 +7,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import api from '../api/axiosInstance.js';
+import { registerClientAccount } from '../services/authService.js';
 
 export default function AuthRegisterForm({ onSuccess, title }) {
   const [fullName, setFullName] = useState('');
@@ -25,23 +25,16 @@ export default function AuthRegisterForm({ onSuccess, title }) {
     setLoading(true);
 
     try {
-      const body = { fullName, email, phone, password };
-      const { data } = await api.post('/auth/register', body);
-      const message =
-        (data && (data.message || data.data || data)) ||
-        'Đăng ký thành công, vui lòng kiểm tra email để lấy OTP.';
+      const { message } = await registerClientAccount({
+        fullName,
+        email,
+        phone,
+        password,
+      });
 
-      setSuccessMessage(
-        typeof message === 'string'
-          ? message
-          : 'Đăng ký thành công, vui lòng kiểm tra email để lấy OTP.',
-      );
+      setSuccessMessage(message);
       if (onSuccess) {
-        onSuccess(
-          typeof message === 'string'
-            ? message
-            : 'Đăng ký thành công, vui lòng kiểm tra email để lấy OTP.',
-        );
+        onSuccess(message);
       }
     } catch (err) {
       const message =
