@@ -1,0 +1,42 @@
+## File / thư mục phụ thuộc
+**/node_modules/
+**/.pnp/
+.pnp.js
+
+## Build output
+dist/
+backend/dist/
+frontend/apps/*/dist/
+
+## File tạm của TypeScript / NestJS
+*.tsbuildinfo
+backend/tsconfig.build.tsbuildinfo
+
+## Log & debug
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+logs/
+*.log
+
+## Môi trường / bí mật
+.env
+.env.*
+*.env.local
+
+## Công cụ / IDE
+.vscode/
+.idea/
+*.iml
+
+## Hệ điều hành
+.DS_Store
+Thumbs.db
+
+## Kiểm thử
+coverage/
+.nyc_output/
+
+## Khác
+tmp/
+temp/
