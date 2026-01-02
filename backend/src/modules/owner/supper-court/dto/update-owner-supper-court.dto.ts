@@ -1,5 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUrl, Length } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Length,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class UpdateOwnerSupperCourtDto {
   @ApiPropertyOptional({ example: 'Sân cầu lông HUST - Cơ sở 1' })
@@ -53,4 +62,20 @@ export class UpdateOwnerSupperCourtDto {
   @IsString()
   @Length(2, 255)
   bankAccountNumber?: string;
+
+  @ApiPropertyOptional({ example: 21.004567 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({}, { message: 'Latitude phải là số' })
+  @Min(-90, { message: 'Latitude không hợp lệ' })
+  @Max(90, { message: 'Latitude không hợp lệ' })
+  latitude?: number;
+
+  @ApiPropertyOptional({ example: 105.843123 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({}, { message: 'Longitude phải là số' })
+  @Min(-180, { message: 'Longitude không hợp lệ' })
+  @Max(180, { message: 'Longitude không hợp lệ' })
+  longitude?: number;
 }

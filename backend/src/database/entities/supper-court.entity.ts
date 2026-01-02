@@ -33,6 +33,12 @@ export class SupperCourtEntity {
   @Column({ name: 'address_link', type: 'varchar', length: 255 })
   addressLink: string;
 
+  @Column({ name: 'latitude', type: 'decimal', precision: 10, scale: 8 })
+  latitude: number;
+
+  @Column({ name: 'longitude', type: 'decimal', precision: 10, scale: 8 })
+  longitude: number;
+
   @Column({ type: 'varchar', length: 255 })
   phone: string;
 

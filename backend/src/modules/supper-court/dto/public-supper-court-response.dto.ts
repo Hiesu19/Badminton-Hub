@@ -46,6 +46,14 @@ export class PublicSupperCourtResponseDto {
   website?: string | null;
 
   @Expose()
+  @ApiProperty({ example: 21.004567 })
+  latitude: number;
+
+  @Expose()
+  @ApiProperty({ example: 105.843123 })
+  longitude: number;
+
+  @Expose()
   @ApiPropertyOptional({
     example:
       'https://badminton-hub.s3.ap-southeast-1.amazonaws.com/supper-court.jpg',

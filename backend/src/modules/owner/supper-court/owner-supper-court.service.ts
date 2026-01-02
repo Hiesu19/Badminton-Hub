@@ -56,6 +56,8 @@ export class OwnerSupperCourtService {
       imageUrl,
       bankName,
       bankAccountNumber,
+      latitude,
+      longitude,
     } = dto;
 
     if (name !== undefined) court.name = name;
@@ -67,6 +69,8 @@ export class OwnerSupperCourtService {
     if (bankName !== undefined) court.bankName = bankName;
     if (bankAccountNumber !== undefined)
       court.bankAccountNumber = bankAccountNumber;
+    if (latitude !== undefined) court.latitude = latitude;
+    if (longitude !== undefined) court.longitude = longitude;
 
     await this.supperCourtRepository.save(court);
 

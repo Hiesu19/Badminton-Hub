@@ -1,10 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUrl,
   Length,
+  Max,
+  Min,
 } from 'class-validator';
 
 export class CreateSupperCourtDto {
@@ -33,6 +37,26 @@ export class CreateSupperCourtDto {
   @IsNotEmpty({ message: 'Link địa chỉ không được để trống' })
   @Length(2, 255, { message: 'Link địa chỉ phải từ 2 - 255 ký tự' })
   addressLink: string;
+
+  @ApiProperty({
+    example: 21.004567,
+    description: 'Vĩ độ (latitude) của cụm sân',
+  })
+  @Type(() => Number)
+  @IsNumber({}, { message: 'Latitude phải là số' })
+  @Min(-90, { message: 'Latitude không hợp lệ' })
+  @Max(90, { message: 'Latitude không hợp lệ' })
+  latitude: number;
+
+  @ApiProperty({
+    example: 105.843123,
+    description: 'Kinh độ (longitude) của cụm sân',
+  })
+  @Type(() => Number)
+  @IsNumber({}, { message: 'Longitude phải là số' })
+  @Min(-180, { message: 'Longitude không hợp lệ' })
+  @Max(180, { message: 'Longitude không hợp lệ' })
+  longitude: number;
 
   @ApiProperty({ example: '0987654321' })
   @IsString()
