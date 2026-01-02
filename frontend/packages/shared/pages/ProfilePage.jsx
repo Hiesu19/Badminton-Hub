@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { fetchMyProfile, updateMyProfile } from '../services/userService.js';
 import { uploadImageWithPresignedKey } from '../api/uploadImage.js';
+import { showSuccessToast, showErrorToast } from '../utils/toast.js';
 
 export default function ProfilePage({ title = 'Thông tin cá nhân' }) {
   const [loading, setLoading] = useState(true);
@@ -74,12 +75,18 @@ export default function ProfilePage({ title = 'Thông tin cá nhân' }) {
         setAvatarUrl(user.avatarUrl ?? avatarUrl);
       }
 
-      setSuccess(message || 'Cập nhật thông tin thành công');
+      const finalMessage = message || 'Cập nhật thông tin thành công';
+      setSuccess(finalMessage);
+      showSuccessToast(finalMessage);
     } catch (err) {
       const message =
         err?.response?.data?.message ||
         'Cập nhật thông tin thất bại. Vui lòng thử lại.';
-      setError(Array.isArray(message) ? message.join(', ') : message);
+      const finalMessage = Array.isArray(message)
+        ? message.join(', ')
+        : message;
+      setError(finalMessage);
+      showErrorToast(finalMessage);
     } finally {
       setSaving(false);
     }
@@ -107,16 +114,19 @@ export default function ProfilePage({ title = 'Thông tin cá nhân' }) {
 
       setAvatarUrl(user?.avatarUrl || publicUrl);
       setSuccess('Cập nhật ảnh đại diện thành công.');
+      showSuccessToast('Cập nhật ảnh đại diện thành công.');
     } catch (err) {
       const message =
         err?.response?.data?.message ||
         err?.message ||
         'Upload ảnh avatar thất bại. Vui lòng thử lại.';
-      setError(Array.isArray(message) ? message.join(', ') : message);
+      const finalMessage = Array.isArray(message)
+        ? message.join(', ')
+        : message;
+      setError(finalMessage);
+      showErrorToast(finalMessage);
     } finally {
       setUploadingAvatar(false);
-      // Cho phép chọn lại cùng 1 file lần sau nếu cần
-      // eslint-disable-next-line no-param-reassign
       event.target.value = '';
     }
   };

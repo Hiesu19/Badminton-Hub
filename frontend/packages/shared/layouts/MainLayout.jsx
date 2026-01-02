@@ -10,6 +10,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { Toaster } from 'react-hot-toast';
 
 const drawerWidth = 260;
 
@@ -34,7 +35,7 @@ const COLORS = {
  * - Slim mode: có thể mở rộng sau bằng 1 prop (ví dụ `mini`) để thu gọn Drawer.
  *
  * @param {object} props
- * @param {React.ReactNode} props.sidebar 
+ * @param {React.ReactNode} props.sidebar
  * @param {React.ReactNode} props.children
  */
 export default function MainLayout({ sidebar, children }) {
@@ -77,6 +78,7 @@ export default function MainLayout({ sidebar, children }) {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: COLORS.pageBg }}>
       <CssBaseline />
+      <Toaster position="top-right" />
 
       {/* Sidebar desktop - Permanent */}
       <Drawer
@@ -172,7 +174,6 @@ export default function MainLayout({ sidebar, children }) {
                 Dashboard
               </Typography>
             </Box>
-
           </Toolbar>
         </AppBar>
 
