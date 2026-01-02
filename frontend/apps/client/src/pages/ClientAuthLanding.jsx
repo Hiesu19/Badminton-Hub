@@ -1,73 +1,110 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Button, Typography, Chip, Stack } from '@mui/material';
-import { MainLayout, AuthLoginForm, AuthRegisterForm } from '@booking/shared';
+import HomeIcon from '@mui/icons-material/Home';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import SettingsIcon from '@mui/icons-material/Settings';
+import RequestPageIcon from '@mui/icons-material/RequestPage';
+import ReportIcon from '@mui/icons-material/Assessment';
+import {
+  MainLayout,
+  Sidebar,
+  AuthLoginForm,
+  AuthRegisterForm,
+} from '@booking/shared';
 import '../App.css';
 
 /**
- * Trang landing + Auth dành cho khách chơi (client site).
- * - Dùng MainLayout với sidebar giới thiệu tính năng.
- * - Bên phải là form Đăng nhập / Đăng ký có thể chuyển đổi.
+ * Trang landing/auth cho client:
+ * - Bên trái: giới thiệu ngắn về hệ thống
+ * - Bên phải: form đăng nhập/đăng ký hoặc chào mừng + nút đăng xuất nếu đã đăng nhập
  */
 export default function ClientAuthLanding() {
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [mode, setMode] = useState('login');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    syncUserFromStorage();
+  }, []);
+
+  /**
+   * Đọc thông tin user + token từ localStorage và cập nhật state.
+   * Dùng khi load trang lần đầu hoặc sau khi đăng nhập thành công.
+   */
+  const syncUserFromStorage = () => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const rawUser = localStorage.getItem('user');
+
+      if (!accessToken && !rawUser) {
+        setCurrentUser(null);
+        return;
+      }
+
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        setCurrentUser(parsed);
+      } else {
+        setCurrentUser({ role: 'client' });
+      }
+    } catch {
+      setCurrentUser(null);
+    }
+  };
+
+  /**
+   * Callback truyền cho form đăng nhập, dùng để đồng bộ lại state sau khi login ok.
+   */
+  const handleLoginSuccess = () => {
+    syncUserFromStorage();
+  };
+
+  /**
+   * Xoá token + thông tin user khỏi localStorage và reset state.
+   */
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+    } catch {
+      // ignore
+    }
+    setCurrentUser(null);
+    setMode('login');
+  };
+
+  const sidebarItems = [
+    { text: 'Trang chủ', icon: HomeIcon, path: '/' },
+    { text: 'Đặt sân', icon: DashboardIcon, path: '/root/book' },
+    {
+      text: 'Lịch sử đặt sân',
+      icon: RequestPageIcon,
+      path: '/root/history',
+    },
+  ];
+
+  const sidebarUser = currentUser
+    ? {
+        name:
+          currentUser.fullName ||
+          currentUser.name ||
+          currentUser.email ||
+          'Người dùng',
+        role: currentUser.role || 'client',
+        avatarUrl: currentUser.avatarUrl,
+      }
+    : {
+        name: 'Khách chơi',
+        role: 'client',
+      };
 
   const sidebar = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Typography
-        variant="subtitle2"
-        sx={{ textTransform: 'uppercase', color: '#64748b', fontWeight: 600 }}
-      >
-        Dành cho khách chơi
-      </Typography>
-
-      <Stack component="nav" spacing={1.2}>
-        <Box>
-          <Typography
-            variant="body1"
-            sx={{ fontWeight: 600, color: '#14532d', mb: 0.3 }}
-          >
-            Trang chủ
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#6b7280' }}>
-            Khám phá sân cầu lông gần bạn
-          </Typography>
-        </Box>
-
-        <Box>
-          <Typography
-            variant="body1"
-            sx={{ fontWeight: 600, color: '#14532d', mb: 0.3 }}
-          >
-            Đặt sân nhanh
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#6b7280' }}>
-            Chọn giờ, chọn sân, xác nhận trong vài bước
-          </Typography>
-        </Box>
-
-        <Box>
-          <Typography
-            variant="body1"
-            sx={{ fontWeight: 600, color: '#14532d', mb: 0.3 }}
-          >
-            Lịch sử đặt sân
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#6b7280' }}>
-            Theo dõi các lượt đặt và thanh toán của bạn
-          </Typography>
-        </Box>
-      </Stack>
-
-      <Box sx={{ mt: 3 }}>
-        <Typography
-          variant="caption"
-          sx={{ color: '#9ca3af', fontStyle: 'italic' }}
-        >
-          Sau khi đăng nhập, bạn sẽ thấy nhiều tính năng chi tiết hơn trong
-          sidebar này.
-        </Typography>
-      </Box>
-    </Box>
+    <Sidebar
+      user={sidebarUser}
+      items={sidebarItems}
+      canOpenProfile={!!currentUser}
+      onLogout={currentUser ? handleLogout : undefined}
+    />
   );
 
   return (
@@ -145,7 +182,7 @@ export default function ClientAuthLanding() {
           </Stack>
         </Box>
 
-        {/* Khối Auth bên phải */}
+        {/* Khối Auth / Thông tin user bên phải */}
         <Box
           sx={{
             flex: 1,
@@ -154,61 +191,117 @@ export default function ClientAuthLanding() {
             width: '100%',
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 1,
-              mb: 2.5,
-            }}
-          >
-            <Button
-              variant={mode === 'login' ? 'contained' : 'text'}
-              onClick={() => setMode('login')}
+          {currentUser ? (
+            <Box
               sx={{
-                px: 3,
-                py: 1,
-                borderRadius: 999,
-                textTransform: 'none',
-                fontWeight: 600,
-                bgcolor: mode === 'login' ? '#22c55e' : 'transparent',
-                color: mode === 'login' ? '#ffffff' : '#374151',
-                '&:hover': {
-                  bgcolor: mode === 'login' ? '#16a34a' : '#f3f4f6',
-                },
+                p: 4,
+                borderRadius: 3,
+                bgcolor: '#ffffff',
+                boxShadow: '0 12px 40px rgba(15, 46, 36, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
               }}
             >
-              Đăng nhập
-            </Button>
-            <Button
-              variant={mode === 'register' ? 'contained' : 'text'}
-              onClick={() => setMode('register')}
-              sx={{
-                px: 3,
-                py: 1,
-                borderRadius: 999,
-                textTransform: 'none',
-                fontWeight: 600,
-                bgcolor: mode === 'register' ? '#22c55e' : 'transparent',
-                color: mode === 'register' ? '#ffffff' : '#374151',
-                '&:hover': {
-                  bgcolor: mode === 'register' ? '#16a34a' : '#f3f4f6',
-                },
-              }}
-            >
-              Đăng ký
-            </Button>
-          </Box>
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: '#1f3f2b', mb: 1 }}
+                >
+                  Xin chào, {sidebarUser.name}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#4b5563', mb: 1.5 }}>
+                  Bạn đã đăng nhập với vai trò{' '}
+                  <strong>{sidebarUser.role}</strong>.
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#6b7280' }}>
+                  Bạn có thể tiếp tục sử dụng hệ thống hoặc đăng xuất khi cần.
+                </Typography>
+              </Box>
 
-          {mode === 'login' ? (
-            <AuthLoginForm site="client" title="Đăng nhập Badminton Hub" />
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                <Button
+                  variant="outlined"
+                  onClick={handleLogout}
+                  sx={{
+                    px: 3,
+                    py: 1,
+                    borderRadius: 999,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    borderColor: '#22c55e',
+                    color: '#166534',
+                    '&:hover': {
+                      borderColor: '#16a34a',
+                      bgcolor: '#ecfdf3',
+                    },
+                  }}
+                >
+                  Đăng xuất
+                </Button>
+              </Box>
+            </Box>
           ) : (
-            <AuthRegisterForm title="Tạo tài khoản Badminton Hub" />
+            <>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: 1,
+                  mb: 2.5,
+                }}
+              >
+                <Button
+                  variant={mode === 'login' ? 'contained' : 'text'}
+                  onClick={() => setMode('login')}
+                  sx={{
+                    px: 3,
+                    py: 1,
+                    borderRadius: 999,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    bgcolor: mode === 'login' ? '#22c55e' : 'transparent',
+                    color: mode === 'login' ? '#ffffff' : '#374151',
+                    '&:hover': {
+                      bgcolor: mode === 'login' ? '#16a34a' : '#f3f4f6',
+                    },
+                  }}
+                >
+                  Đăng nhập
+                </Button>
+                <Button
+                  variant={mode === 'register' ? 'contained' : 'text'}
+                  onClick={() => setMode('register')}
+                  sx={{
+                    px: 3,
+                    py: 1,
+                    borderRadius: 999,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    bgcolor: mode === 'register' ? '#22c55e' : 'transparent',
+                    color: mode === 'register' ? '#ffffff' : '#374151',
+                    '&:hover': {
+                      bgcolor: mode === 'register' ? '#16a34a' : '#f3f4f6',
+                    },
+                  }}
+                >
+                  Đăng ký
+                </Button>
+              </Box>
+
+              {mode === 'login' ? (
+                <AuthLoginForm
+                  site="client"
+                  title="Đăng nhập Badminton Hub"
+                  onSuccess={handleLoginSuccess}
+                />
+              ) : (
+                <AuthRegisterForm title="Tạo tài khoản Badminton Hub" />
+              )}
+            </>
           )}
         </Box>
       </Box>
     </MainLayout>
   );
 }
-
-

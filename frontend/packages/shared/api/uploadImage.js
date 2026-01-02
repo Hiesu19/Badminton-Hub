@@ -1,24 +1,31 @@
 import api from './axiosInstance.js';
+import axios from 'axios';
 
-/**
+const resolveContentType = (file) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+  let contentType = file.type;
 
- *
- * @param {Object} options
- * @param {'avatar' | 'supperCourtMain' | 'supperCourtBanner' | 'supperCourtGallery'} options.type
- * @param {File} options.file - File ảnh cần upload
- * @param {string} [options.supperCourtId] - Bắt buộc cho các type liên quan tới sân
- * @param {number} [options.position] - Vị trí ảnh gallery (bắt buộc nếu type = 'supperCourtGallery')
- * @returns {Promise<{ publicUrl: string; key: string }>}
- */
-export async function uploadImageWithPresignedKey(options) {
-  const { type, file, supperCourtId, position } = options;
+  if (!allowedTypes.includes(contentType)) {
+    const fileName = (file.name || '').toLowerCase();
 
-  if (!file) {
-    throw new Error('File không được để trống');
+    if (fileName.endsWith('.png')) {
+      contentType = 'image/png';
+    } else if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+      contentType = 'image/jpeg';
+    } else {
+      contentType = 'image/jpeg';
+    }
   }
 
-  const contentType = file.type || 'image/jpeg';
+  return contentType;
+};
 
+const getS3PresignedUrl = async ({
+  type,
+  contentType,
+  supperCourtId,
+  position,
+}) => {
   let presignedEndpoint = '';
   let body = {};
 
@@ -54,24 +61,46 @@ export async function uploadImageWithPresignedKey(options) {
   }
 
   const { data } = await api.post(presignedEndpoint, body);
-  const { url, fields, publicUrl, key } = data.data ?? data;
+  return data.data ?? data;
+};
 
+/**
+ * Gọi trực tiếp S3 bằng presigned URL
+ */
+const uploadsImageApi = (url, formData) => {
+  return axios.post(url, formData);
+};
+
+const uploadToS3 = async (s3Data, file, contentType) => {
   const formData = new FormData();
 
-  Object.entries(fields).forEach(([k, v]) => {
+  Object.entries(s3Data.fields).forEach(([k, v]) => {
     formData.append(k, v);
   });
-
-  formData.append('Content-Type', contentType);
   formData.append('file', file);
+  await uploadsImageApi(s3Data.url, formData);
+  return s3Data.publicUrl;
+};
 
-  await fetch(url, {
-    method: 'POST',
-    body: formData,
+export async function uploadImageWithPresignedKey(options) {
+  const { type, file, supperCourtId, position } = options;
+
+  if (!file) {
+    throw new Error('File không được để trống');
+  }
+  const contentType = resolveContentType(file);
+
+  const s3Data = await getS3PresignedUrl({
+    type,
+    contentType,
+    supperCourtId,
+    position,
   });
+
+  const publicUrl = await uploadToS3(s3Data, file, contentType);
 
   return {
     publicUrl,
-    key,
+    key: s3Data.key,
   };
 }

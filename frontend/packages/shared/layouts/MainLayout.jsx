@@ -34,8 +34,8 @@ const COLORS = {
  * - Slim mode: có thể mở rộng sau bằng 1 prop (ví dụ `mini`) để thu gọn Drawer.
  *
  * @param {object} props
- * @param {React.ReactNode} props.sidebar - Nội dung sidebar (menu, avatar, ...)
- * @param {React.ReactNode} props.children - Nội dung chính trang
+ * @param {React.ReactNode} props.sidebar 
+ * @param {React.ReactNode} props.children
  */
 export default function MainLayout({ sidebar, children }) {
   const theme = useTheme();
@@ -157,7 +157,6 @@ export default function MainLayout({ sidebar, children }) {
                   aria-label="open drawer"
                   onClick={handleToggleDrawer}
                 >
-                  {/* Dùng ký tự ☰ để tránh phụ thuộc @mui/icons-material */}
                   <Typography component="span" sx={{ fontSize: 22 }}>
                     ☰
                   </Typography>
@@ -174,7 +173,6 @@ export default function MainLayout({ sidebar, children }) {
               </Typography>
             </Box>
 
-            {/* Chỗ này bạn có thể truyền thêm action bên phải (user menu, nút, v.v) bằng cách thêm prop sau */}
           </Toolbar>
         </AppBar>
 

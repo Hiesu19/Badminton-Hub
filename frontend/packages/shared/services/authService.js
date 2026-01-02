@@ -5,17 +5,6 @@ const ENDPOINT_BY_SITE = {
   owner: '/auth/login-owner',
   admin: '/auth/login-super-admin',
 };
-
-/**
- * Gọi API đăng nhập theo loại site (client/owner/admin).
- * - Tự động lưu accessToken & refreshToken vào localStorage nếu có.
- *
- * @param {object} params
- * @param {string} params.email
- * @param {string} params.password
- * @param {'client'|'owner'|'admin'} [params.site='client']
- * @returns {Promise<{accessToken?: string, refreshToken?: string, raw: any}>}
- */
 export async function loginWithEmailPassword({
   email,
   password,
@@ -30,23 +19,21 @@ export async function loginWithEmailPassword({
     localStorage.setItem('refreshToken', payload.refreshToken);
   }
 
+  if (payload?.user) {
+    try {
+      localStorage.setItem('user', JSON.stringify(payload.user));
+    } catch (error) {
+    }
+  }
+
   return {
     accessToken: payload?.accessToken,
     refreshToken: payload?.refreshToken,
+    user: payload?.user,
     raw: payload,
   };
 }
 
-/**
- * Gọi API đăng ký tài khoản client.
- *
- * @param {object} params
- * @param {string} params.fullName
- * @param {string} params.email
- * @param {string} params.phone
- * @param {string} params.password
- * @returns {Promise<{message: string, raw: any}>}
- */
 export async function registerClientAccount({
   fullName,
   email,
