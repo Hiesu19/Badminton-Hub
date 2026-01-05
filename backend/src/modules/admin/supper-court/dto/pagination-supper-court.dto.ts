@@ -1,6 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { SupperCourtStatus } from 'src/shared/enums/supper-court.enum';
 
 export class SupperCourtPaginationDto {
@@ -30,4 +37,17 @@ export class SupperCourtPaginationDto {
   @IsOptional()
   @IsEnum(SupperCourtStatus)
   status?: SupperCourtStatus;
+
+  @ApiPropertyOptional({
+    description:
+      'Nếu isAll=true thì bỏ qua phân trang và trả về toàn bộ danh sách',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined) return undefined;
+    if (typeof value === 'boolean') return value;
+    return value === 'true' || value === '1';
+  })
+  @IsBoolean()
+  isAll?: boolean;
 }

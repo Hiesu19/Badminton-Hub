@@ -62,5 +62,4 @@ export class UserEntity {
   // -----------------------------
 }
 
-// Alias để các module có thể import `User` (giống code hiện tại)
 export { UserEntity as User };

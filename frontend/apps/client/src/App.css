@@ -3,3 +3,14 @@
   margin: 0;
   padding: 0;
 }
+
+/* Tuỳ biến màu marker Leaflet */
+.leaflet-marker-icon.court-marker-icon {
+  /* Đổi từ xanh dương sang xanh lá (xấp xỉ) */
+  filter: hue-rotate(90deg);
+}
+
+.leaflet-marker-icon.current-location-marker-icon {
+  /* Đổi từ xanh dương sang đỏ (xấp xỉ) */
+  filter: hue-rotate(-120deg);
+}

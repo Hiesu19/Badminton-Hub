@@ -36,7 +36,7 @@ export class SupperCourtEntity {
   @Column({ name: 'latitude', type: 'decimal', precision: 10, scale: 8 })
   latitude: number;
 
-  @Column({ name: 'longitude', type: 'decimal', precision: 10, scale: 8 })
+  @Column({ name: 'longitude', type: 'decimal', precision: 11, scale: 8 })
   longitude: number;
 
   @Column({ type: 'varchar', length: 255 })

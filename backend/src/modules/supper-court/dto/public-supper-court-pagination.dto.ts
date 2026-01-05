@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class PublicSupperCourtPaginationDto {
   @ApiPropertyOptional({ default: 1 })
@@ -21,4 +21,17 @@ export class PublicSupperCourtPaginationDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Nếu isAll=true thì bỏ qua phân trang và trả về toàn bộ danh sách (dùng cho hiển thị bản đồ)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined) return undefined;
+    if (typeof value === 'boolean') return value;
+    return value === 'true' || value === '1';
+  })
+  @IsBoolean()
+  isAll?: boolean;
 }

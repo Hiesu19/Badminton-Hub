@@ -8,7 +8,6 @@ import { Repository } from 'typeorm';
 import { SupperCourtEntity } from '../../../database/entities/supper-court.entity';
 import { SupperCourtPriceEntity } from '../../../database/entities/price-court.entity';
 import { UpdateOwnerSupperCourtDto } from './dto/update-owner-supper-court.dto';
-import { CreateOwnerPriceDto } from './dto/create-owner-price.dto';
 import { UpdateOwnerPriceDto } from './dto/update-owner-price.dto';
 
 @Injectable()
@@ -85,16 +84,6 @@ export class OwnerSupperCourtService {
       where: { supperCourt: { id: court.id } as any },
       order: { dayOfWeek: 'ASC', startTime: 'ASC' },
     });
-  }
-
-  async createPrice(ownerId: string, dto: CreateOwnerPriceDto) {
-    const court = await this.getMyCourtOrThrow(ownerId);
-
-    const price = this.priceRepository.create({
-      ...dto,
-      supperCourt: { id: court.id } as any,
-    });
-    return this.priceRepository.save(price);
   }
 
   async updatePrice(

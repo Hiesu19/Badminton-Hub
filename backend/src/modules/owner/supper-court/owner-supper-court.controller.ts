@@ -5,7 +5,6 @@ import { OwnerAuth } from 'src/shared/decorators/role-auth.decorator';
 import { CustomResponse } from 'src/shared/decorators/custom-response.decorator';
 import { SupperCourtResponseDto } from 'src/modules/admin/supper-court/dto/supper-court-response.dto';
 import { UpdateOwnerSupperCourtDto } from './dto/update-owner-supper-court.dto';
-import { CreateOwnerPriceDto } from './dto/create-owner-price.dto';
 import { UpdateOwnerPriceDto } from './dto/update-owner-price.dto';
 
 @Controller('/owner/supper-court')
@@ -50,16 +49,6 @@ export class OwnerSupperCourtController {
   })
   async listPrices(@Req() req: any) {
     return this.ownerSupperCourtService.listPrices(req.user.id);
-  }
-
-  @Post('prices')
-  @CustomResponse('string', {
-    code: 201,
-    message: 'Tạo bảng giá thành công',
-    description: '[owner] Thêm mới cấu hình giá',
-  })
-  async createPrice(@Req() req: any, @Body() dto: CreateOwnerPriceDto) {
-    return this.ownerSupperCourtService.createPrice(req.user.id, dto);
   }
 
   @Patch('prices/:priceId')

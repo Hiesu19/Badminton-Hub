@@ -2,9 +2,7 @@ import { useEffect, useState } from 'react';
 import { Box, Button, Typography, Chip, Stack } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import SettingsIcon from '@mui/icons-material/Settings';
 import RequestPageIcon from '@mui/icons-material/RequestPage';
-import ReportIcon from '@mui/icons-material/Assessment';
 import {
   MainLayout,
   Sidebar,
@@ -26,10 +24,6 @@ export default function ClientAuthLanding() {
     syncUserFromStorage();
   }, []);
 
-  /**
-   * Đọc thông tin user + token từ localStorage và cập nhật state.
-   * Dùng khi load trang lần đầu hoặc sau khi đăng nhập thành công.
-   */
   const syncUserFromStorage = () => {
     try {
       const accessToken = localStorage.getItem('accessToken');
@@ -75,11 +69,12 @@ export default function ClientAuthLanding() {
 
   const sidebarItems = [
     { text: 'Trang chủ', icon: HomeIcon, path: '/' },
-    { text: 'Đặt sân', icon: DashboardIcon, path: '/root/book' },
+    { text: 'Map View', icon: DashboardIcon, path: '/maps' },
+    { text: 'Đặt sân', icon: DashboardIcon, path: '/book' },
     {
       text: 'Lịch sử đặt sân',
       icon: RequestPageIcon,
-      path: '/root/history',
+      path: '/history',
     },
   ];
 

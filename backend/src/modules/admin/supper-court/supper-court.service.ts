@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { SupperCourtEntity } from '../../../database/entities/supper-court.entity';
+import { SupperCourtPriceEntity } from '../../../database/entities/price-court.entity';
 import { CreateSupperCourtDto } from './dto/create-supper-court.dto';
 import { UpdateSupperCourtDto } from './dto/update-supper-court.dto';
 import { SupperCourtPaginationDto } from './dto/pagination-supper-court.dto';
@@ -15,6 +16,8 @@ export class SupperCourtService {
   constructor(
     @InjectRepository(SupperCourtEntity)
     private readonly supperCourtRepository: Repository<SupperCourtEntity>,
+    @InjectRepository(SupperCourtPriceEntity)
+    private readonly priceRepository: Repository<SupperCourtPriceEntity>,
   ) {}
 
   async create(ownerId: string, dto: CreateSupperCourtDto) {
@@ -34,8 +37,43 @@ export class SupperCourtService {
       ...dto,
       user: { id: numericOwnerId } as any,
     });
+
     await this.supperCourtRepository.save(supperCourt);
+    await this.priceRepository.save(
+      this.generateWeeklyPriceGrid(supperCourt.id),
+    );
+
     return supperCourt;
+  }
+
+  private generateWeeklyPriceGrid(supperCourtId: number) {
+    const blocks: Partial<SupperCourtPriceEntity>[] = [];
+
+    const formatTime = (minutes: number) => {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return `${String(hours).padStart(2, '0')}:${String(mins).padStart(
+        2,
+        '0',
+      )}:00`;
+    };
+
+    for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek += 1) {
+      for (let slot = 0; slot < 48; slot += 1) {
+        const startMinutes = slot * 30;
+        const endMinutes = (slot + 1) * 30;
+
+        blocks.push({
+          dayOfWeek,
+          startTime: formatTime(startMinutes),
+          endTime: formatTime(endMinutes),
+          pricePerHour: 10000000, // 10.000.000 VNĐ / giờ :)
+          supperCourt: { id: supperCourtId } as any,
+        });
+      }
+    }
+
+    return blocks;
   }
 
   async findAll(pagination: SupperCourtPaginationDto) {
@@ -50,6 +88,22 @@ export class SupperCourtService {
 
     if (pagination.status) {
       where.status = pagination.status;
+    }
+
+    if (pagination.isAll) {
+      const items = await this.supperCourtRepository.find({
+        where,
+        order: { id: 'DESC' },
+      });
+
+      return {
+        data: items,
+        meta: {
+          page: 1,
+          limit: items.length || limit,
+          total: items.length,
+        },
+      };
     }
 
     const [items, total] = await this.supperCourtRepository.findAndCount({
