@@ -34,6 +34,9 @@ export class BookingEntity {
   })
   status: BookingStatus = BookingStatus.PENDING;
 
+  @Column({ name: 'expired_at', type: 'timestamp', nullable: false })
+  expiredAt: Date;
+
   @CreateDateColumn({
     type: 'timestamp',
     precision: 6,
@@ -66,4 +69,3 @@ export class BookingEntity {
   @OneToMany(() => BookingItemEntity, (item) => item.booking, { cascade: true })
   items: BookingItemEntity[];
 }
-

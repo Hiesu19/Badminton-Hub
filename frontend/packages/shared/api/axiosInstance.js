@@ -17,7 +17,6 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
-// Gắn accessToken vào header Authorization cho mọi request nếu có
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -45,7 +44,7 @@ api.interceptors.response.use(
       if (!isRefreshing) {
         isRefreshing = true;
         try {
-          const { data } = await axios.post(`${API_URL}/auth/refresh`, {
+          const { data } = await axios.post(`${API_URL}auth/refresh-token`, {
             refreshToken: localStorage.getItem('refreshToken'),
           });
 

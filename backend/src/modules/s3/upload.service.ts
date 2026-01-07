@@ -4,6 +4,7 @@ import { PresignedSupperCourtGalleryImageDto } from './dto/presigned-product-ima
 import { PresignedAvatarImageDto } from './dto/presigned-avatar-image.dto';
 import { PresignedSupperCourtMainImageDto } from './dto/presigned-categrory-image.dto';
 import { PresignedSupperCourtBannerImageDto } from './dto/presigned-brand-image.dto';
+import { PresignedBookingBillImageDto } from './dto/presigned-booking-bill-image.dto';
 
 @Injectable()
 export class UploadService {
@@ -166,6 +167,43 @@ export class UploadService {
         error instanceof Error
           ? error.message
           : 'Không thể tạo presigned supper court banner image URL';
+      throw new BadRequestException(message);
+    }
+  }
+
+  async getPresignedBookingBillImageUrl(
+    userId: string,
+    body: PresignedBookingBillImageDto,
+  ) {
+    const { bookingId, contentType } = body;
+
+    const extension = this.getExtensionFromContentType(contentType);
+    if (!extension) {
+      throw new BadRequestException('ContentType không hợp lệ');
+    }
+
+    const s3Key = `users/${userId}/booking-bills/${bookingId}${extension}`;
+
+    try {
+      const { url, fields } = await this.s3Service.getPresignedPostUrl(
+        s3Key,
+        contentType,
+      );
+
+      return {
+        url,
+        fields,
+        publicUrl: this.s3Service.getPublicUrl(s3Key),
+        key: s3Key,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Không thể tạo presigned booking bill image URL';
       throw new BadRequestException(message);
     }
   }

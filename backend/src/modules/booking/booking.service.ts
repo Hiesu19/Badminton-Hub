@@ -12,6 +12,7 @@ import { BookingItemEntity } from '../../database/entities/booking-item.entity';
 import { SubCourtEntity } from '../../database/entities/sub-court.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UploadBookingBillDto } from './dto/upload-booking-bill.dto';
+import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 
 @Injectable()
 export class BookingService {
@@ -169,7 +170,7 @@ export class BookingService {
 
     const existingItems = await this.bookingItemRepository
       .createQueryBuilder('item')
-      .leftJoin('item.subCourt', 'subCourt')
+      .leftJoinAndSelect('item.subCourt', 'subCourt')
       .leftJoin('item.booking', 'booking')
       .where('subCourt.id IN (:...subCourtIds)', {
         subCourtIds: uniqueSubCourtIds,
@@ -178,14 +179,6 @@ export class BookingService {
       .andWhere('booking.status NOT IN (:...cancelled)', {
         cancelled: [BookingStatus.CANCELLED, BookingStatus.REJECTED],
       })
-      .select([
-        'item.id',
-        'item.subCourt',
-        'item.date',
-        'item.startTime',
-        'item.endTime',
-        'booking.status',
-      ])
       .getMany();
 
     for (const parsed of parsedItems) {
@@ -224,9 +217,26 @@ export class BookingService {
       status: BookingStatus.PENDING,
       user: { id: numericUserId } as any,
       supperCourt: { id: supperCourtId } as any,
+      expiredAt: new Date(Date.now() + 7 * 60 * 1000),
       items: bookingItems,
     });
-    return this.bookingRepository.save(booking);
+    const saved = await this.bookingRepository.save(booking);
+    const fresh = await this.bookingRepository.findOneOrFail({
+      where: { id: saved.id },
+      relations: ['items', 'items.subCourt', 'supperCourt', 'user'],
+    });
+
+    return {
+      id: fresh.id,
+      note: fresh.note,
+      totalPrice: fresh.totalPrice,
+      status: fresh.status,
+      expiredAt: fresh.expiredAt,
+      createdAt: fresh.createdAt,
+      updatedAt: fresh.updatedAt,
+      items: fresh.items,
+      supperCourt: fresh.supperCourt,
+    };
   }
 
   async uploadBill(
@@ -245,8 +255,9 @@ export class BookingService {
       relations: ['user', 'items'],
       where: { id: numericBookingId },
     });
+    console.log(booking?.user?.id, numericUserId);
 
-    if (!booking || booking.user?.id !== numericUserId) {
+    if (!booking || Number(booking.user?.id) !== numericUserId) {
       throw new NotFoundException('Booking không tồn tại.');
     }
 
@@ -259,5 +270,103 @@ export class BookingService {
       where: { id: numericBookingId },
       relations: ['items', 'supperCourt'],
     });
+  }
+
+  async listByUser(userId: string) {
+    return this.bookingRepository.find({
+      where: { user: { id: Number(userId) } as any },
+      relations: ['items', 'supperCourt', 'user'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findOneForUser(userId: string, bookingId: string) {
+    const numericUserId = Number(userId);
+    const numericBookingId = Number(bookingId);
+    if (Number.isNaN(numericBookingId)) {
+      throw new BadRequestException('bookingId không hợp lệ');
+    }
+    const booking = await this.bookingRepository.findOne({
+      where: { id: numericBookingId, user: { id: numericUserId } as any },
+      relations: ['items', 'supperCourt', 'user'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking không tồn tại');
+    }
+    return booking;
+  }
+
+  async cancelByUser(userId: string, bookingId: string) {
+    const booking = await this.findOneForUser(userId, bookingId);
+    booking.status = BookingStatus.CANCELLED;
+    return this.bookingRepository.save(booking);
+  }
+
+  async listByOwner(ownerId: string) {
+    return this.bookingRepository
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.supperCourt', 'supperCourt')
+      .leftJoinAndSelect('booking.items', 'items')
+      .leftJoin('supperCourt.user', 'owner')
+      .where('owner.id = :ownerId', { ownerId: Number(ownerId) })
+      .orderBy('booking.createdAt', 'DESC')
+      .getMany();
+  }
+
+  private async ensureOwnerAccess(ownerId: string, bookingId: string) {
+    const numericBookingId = Number(bookingId);
+    const booking = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.supperCourt', 'supperCourt')
+      .leftJoin('supperCourt.user', 'owner')
+      .where('booking.id = :id', { id: numericBookingId })
+      .andWhere('owner.id = :ownerId', { ownerId: Number(ownerId) })
+      .getOne();
+
+    if (!booking) {
+      throw new NotFoundException(
+        'Booking không tồn tại hoặc không thuộc sân của bạn',
+      );
+    }
+    return booking;
+  }
+
+  async updateStatusByOwner(
+    ownerId: string,
+    bookingId: string,
+    dto: UpdateBookingStatusDto,
+  ) {
+    const booking = await this.ensureOwnerAccess(ownerId, bookingId);
+    booking.status = dto.status;
+    return this.bookingRepository.save(booking);
+  }
+
+  async listAllForAdmin() {
+    return this.bookingRepository.find({
+      relations: ['items', 'supperCourt', 'user'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async getById(bookingId: string) {
+    const numericBookingId = Number(bookingId);
+    if (Number.isNaN(numericBookingId)) {
+      throw new BadRequestException('bookingId không hợp lệ');
+    }
+    const booking = await this.bookingRepository.findOne({
+      where: { id: numericBookingId },
+      relations: ['items', 'supperCourt', 'user'],
+    });
+    if (!booking) {
+      throw new NotFoundException('Booking không tồn tại');
+    }
+    return booking;
+  }
+
+  async deleteForAdmin(bookingId: string) {
+    const booking = await this.getById(bookingId);
+    await this.bookingRepository.remove(booking);
+    return { success: true };
   }
 }

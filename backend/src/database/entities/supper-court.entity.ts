@@ -57,6 +57,9 @@ export class SupperCourtEntity {
   @Column({ name: 'bank_account_number', type: 'varchar', length: 255 })
   bankAccountNumber: string;
 
+  @Column({ name: 'qr_code_url', type: 'varchar', length: 500, nullable: true })
+  qrCodeUrl?: string;
+
   @Column({
     name: 'image_url',
     type: 'varchar',

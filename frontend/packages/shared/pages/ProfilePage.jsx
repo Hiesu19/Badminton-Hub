@@ -162,7 +162,6 @@ export default function ProfilePage({ title = 'Thông tin cá nhân' }) {
         gap: 3,
       }}
     >
-      {/* Header */}
       <Box
         sx={{
           display: 'flex',
@@ -203,7 +202,6 @@ export default function ProfilePage({ title = 'Thông tin cá nhân' }) {
         </Button>
       </Box>
 
-      {/* Avatar section giống style ví dụ */}
       <Box
         sx={{
           display: 'flex',
@@ -235,7 +233,6 @@ export default function ProfilePage({ title = 'Thông tin cá nhân' }) {
             {(fullName || email || 'U').trim()[0]?.toUpperCase()}
           </Avatar>
 
-          {/* Overlay + input đè lên ảnh */}
           <Box
             sx={{
               position: 'absolute',
@@ -291,7 +288,6 @@ export default function ProfilePage({ title = 'Thông tin cá nhân' }) {
         </Alert>
       )}
 
-      {/* Thông tin cơ bản */}
       <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
         <TextField
           label="Họ và tên"

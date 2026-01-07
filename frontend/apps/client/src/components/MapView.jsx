@@ -68,7 +68,6 @@ export default function MapView({
   const navigate = useNavigate();
   const markers = courts ?? [];
 
-  // Center ưu tiên vị trí hiện tại, sau đó tới sân đầu tiên, cuối cùng là toạ độ mặc định (HUST)
   const center = useMemo(() => {
     if (currentLocation) {
       return [currentLocation.latitude, currentLocation.longitude];

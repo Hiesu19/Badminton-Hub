@@ -3,13 +3,8 @@ import { Box, Button, Typography, Chip, Stack } from '@mui/material';
 import { MainLayout, AuthLoginForm, AuthRegisterForm } from '@booking/shared';
 import '../App.css';
 
-/**
- * Trang landing + Auth dành cho khách chơi (client site).
- * - Dùng MainLayout với sidebar giới thiệu tính năng.
- * - Bên phải là form Đăng nhập / Đăng ký có thể chuyển đổi.
- */
 export default function ClientAuthLanding() {
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [mode, setMode] = useState('login');
 
   const sidebar = (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -82,7 +77,6 @@ export default function ClientAuthLanding() {
           py: { xs: 2, md: 4 },
         }}
       >
-        {/* Khối giới thiệu bên trái */}
         <Box
           sx={{
             flex: 1,
@@ -145,7 +139,6 @@ export default function ClientAuthLanding() {
           </Stack>
         </Box>
 
-        {/* Khối Auth bên phải */}
         <Box
           sx={{
             flex: 1,

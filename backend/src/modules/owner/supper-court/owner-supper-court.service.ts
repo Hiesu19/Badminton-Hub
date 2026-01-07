@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { SupperCourtEntity } from '../../../database/entities/supper-court.entity';
 import { SupperCourtPriceEntity } from '../../../database/entities/price-court.entity';
 import { UpdateOwnerSupperCourtDto } from './dto/update-owner-supper-court.dto';
@@ -78,10 +78,25 @@ export class OwnerSupperCourtService {
 
   // ---------- Bảng giá ----------
 
-  async listPrices(ownerId: string) {
+  async listPrices(ownerId: string, dayOfWeek?: number) {
     const court = await this.getMyCourtOrThrow(ownerId);
+
+    const whereCondition: any = {
+      supperCourt: { id: court.id } as any,
+    };
+
+    // Nếu có dayOfWeek, filter theo thứ trong tuần
+    if (dayOfWeek !== undefined) {
+      if (dayOfWeek < 0 || dayOfWeek > 6) {
+        throw new BadRequestException(
+          'dayOfWeek phải từ 0 (Chủ nhật) đến 6 (Thứ 7)',
+        );
+      }
+      whereCondition.dayOfWeek = dayOfWeek;
+    }
+
     return this.priceRepository.find({
-      where: { supperCourt: { id: court.id } as any },
+      where: whereCondition,
       order: { dayOfWeek: 'ASC', startTime: 'ASC' },
     });
   }
@@ -91,8 +106,8 @@ export class OwnerSupperCourtService {
     priceId: string,
     dto: UpdateOwnerPriceDto,
   ) {
-    if (!dto || Object.keys(dto).length === 0) {
-      throw new BadRequestException('Không có dữ liệu để cập nhật');
+    if (!dto || dto.pricePerHour === undefined) {
+      throw new BadRequestException('Vui lòng cung cấp giá (pricePerHour)');
     }
 
     const court = await this.getMyCourtOrThrow(ownerId);
@@ -112,29 +127,154 @@ export class OwnerSupperCourtService {
       throw new NotFoundException('Bảng giá không tồn tại');
     }
 
-    Object.assign(price, dto);
+    // Chỉ cho phép cập nhật giá, không cho phép thay đổi khung giờ và thứ trong tuần
+    // Vì các slot đã được cố định là 30 phút
+    price.pricePerHour = dto.pricePerHour;
+
     return this.priceRepository.save(price);
   }
 
-  async deletePrice(ownerId: string, priceId: string) {
-    const court = await this.getMyCourtOrThrow(ownerId);
-    const numericPriceId = Number(priceId);
-    if (Number.isNaN(numericPriceId)) {
-      throw new BadRequestException('Id bảng giá không hợp lệ');
+  async copyPrices(
+    ownerId: string,
+    dayOfWeekFrom: number,
+    dayOfWeekTo: number,
+  ) {
+    // Validate dayOfWeek
+    if (dayOfWeekFrom < 0 || dayOfWeekFrom > 6) {
+      throw new BadRequestException(
+        'dayOfWeekFrom phải từ 0 (Chủ nhật) đến 6 (Thứ 7)',
+      );
+    }
+    if (dayOfWeekTo < 0 || dayOfWeekTo > 6) {
+      throw new BadRequestException(
+        'dayOfWeekTo phải từ 0 (Chủ nhật) đến 6 (Thứ 7)',
+      );
+    }
+    if (dayOfWeekFrom === dayOfWeekTo) {
+      throw new BadRequestException(
+        'Không thể copy cấu hình giá sang chính nó',
+      );
     }
 
-    const price = await this.priceRepository.findOne({
+    const court = await this.getMyCourtOrThrow(ownerId);
+
+    // Lấy tất cả cấu hình giá của thứ nguồn
+    const sourcePrices = await this.priceRepository.find({
       where: {
-        id: numericPriceId,
         supperCourt: { id: court.id } as any,
+        dayOfWeek: dayOfWeekFrom,
+      },
+      order: { startTime: 'ASC' },
+    });
+
+    if (sourcePrices.length === 0) {
+      throw new NotFoundException(
+        `Không tìm thấy cấu hình giá cho thứ ${dayOfWeekFrom}`,
+      );
+    }
+
+    // Xóa tất cả cấu hình giá cũ của thứ đích (nếu có)
+    const existingTargetPrices = await this.priceRepository.find({
+      where: {
+        supperCourt: { id: court.id } as any,
+        dayOfWeek: dayOfWeekTo,
       },
     });
 
-    if (!price) {
-      throw new NotFoundException('Bảng giá không tồn tại');
+    if (existingTargetPrices.length > 0) {
+      await this.priceRepository.remove(existingTargetPrices);
     }
 
-    await this.priceRepository.remove(price);
-    return 'Xóa bảng giá thành công';
+    // Tạo mới cấu hình giá cho thứ đích dựa trên thứ nguồn
+    const newPrices = sourcePrices.map((sourcePrice) =>
+      this.priceRepository.create({
+        supperCourt: { id: court.id } as any,
+        dayOfWeek: dayOfWeekTo,
+        startTime: sourcePrice.startTime,
+        endTime: sourcePrice.endTime,
+        pricePerHour: sourcePrice.pricePerHour,
+      }),
+    );
+
+    await this.priceRepository.save(newPrices);
+
+    return {
+      message: `Đã copy ${newPrices.length} cấu hình giá từ thứ ${dayOfWeekFrom} sang thứ ${dayOfWeekTo}`,
+      count: newPrices.length,
+    };
+  }
+
+  async bulkUpdatePrices(
+    ownerId: string,
+    dayOfWeek: number,
+    startTime: string, // VD: "08:00"
+    endTime: string,   // VD: "14:00"
+    pricePerHour: number,
+  ) {
+    // 1. Validation cơ bản
+    if (dayOfWeek < 0 || dayOfWeek > 6) {
+      throw new BadRequestException('dayOfWeek phải từ 0 (Chủ nhật) đến 6 (Thứ 7)');
+    }
+    if (pricePerHour === undefined || pricePerHour < 0) {
+      throw new BadRequestException('pricePerHour phải là số không âm');
+    }
+  
+    // Helper: Chuẩn hóa string thời gian sang định dạng HH:mm:ss để so sánh trong DB
+    const normalizeTime = (timeStr: string) => {
+      if (!timeStr) throw new BadRequestException('Thời gian không được để trống');
+      const parts = timeStr.split(':');
+      if (parts.length < 2) throw new BadRequestException('Định dạng thời gian phải là HH:mm');
+      
+      const h = parts[0].padStart(2, '0');
+      const m = parts[1].padStart(2, '0');
+      const s = (parts[2] || '00').padStart(2, '0');
+      
+      // Kiểm tra tính hợp lệ của số
+      if (isNaN(+h) || isNaN(+m) || isNaN(+s)) {
+        throw new BadRequestException('Thời gian chứa ký tự không hợp lệ');
+      }
+      return `${h}:${m}:${s}`;
+    };
+  
+    const startFormatted = normalizeTime(startTime);
+    const endFormatted = normalizeTime(endTime);
+  
+    if (startFormatted >= endFormatted) {
+      throw new BadRequestException('Giờ kết thúc phải lớn hơn giờ bắt đầu');
+    }
+  
+    // 2. Lấy thông tin sân
+    const court = await this.getMyCourtOrThrow(ownerId);
+  
+    // 3. Lọc trực tiếp trong Database (Tăng hiệu năng & tránh lỗi parse JS)
+    const targets = await this.priceRepository.find({
+      where: {
+        supperCourt: { id: court.id } as any,
+        dayOfWeek,
+        // So sánh string trực tiếp với kiểu TIME trong Postgres rất chính xác
+        startTime: MoreThanOrEqual(startFormatted),
+        endTime: LessThanOrEqual(endFormatted),
+      },
+      order: { startTime: 'ASC' },
+    });
+  
+    if (!targets || targets.length === 0) {
+      throw new NotFoundException(
+        `Không tìm thấy slot nào trong khoảng ${startTime} - ${endTime} của thứ ${dayOfWeek}`,
+      );
+    }
+  
+    // 4. Cập nhật giá
+    targets.forEach((p) => {
+      p.pricePerHour = pricePerHour;
+    });
+  
+    await this.priceRepository.save(targets);
+  
+    return {
+      message: `Đã cập nhật giá cho ${targets.length} slot thành công`,
+      count: targets.length,
+      appliedRange: `${startFormatted} -> ${endFormatted}`,
+    };
   }
 }

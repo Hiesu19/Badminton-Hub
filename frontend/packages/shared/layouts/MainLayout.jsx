@@ -24,20 +24,6 @@ const COLORS = {
   contentBg: '#f9fbf8',
 };
 
-/**
- * Layout dùng chung cho toàn bộ app
- * - Sidebar bên trái (Permanent trên desktop, Temporary trên mobile)
- * - Nội dung chính bên phải, cuộn độc lập
- * - Màu chủ đạo: trắng + xanh trà (green tea)
- *
- * Gợi ý:
- * - Active state: xử lý bên trong `sidebar` (dùng MUI ListItemButton với prop `selected`).
- * - Slim mode: có thể mở rộng sau bằng 1 prop (ví dụ `mini`) để thu gọn Drawer.
- *
- * @param {object} props
- * @param {React.ReactNode} props.sidebar
- * @param {React.ReactNode} props.children
- */
 export default function MainLayout({ sidebar, children }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -131,7 +117,6 @@ export default function MainLayout({ sidebar, children }) {
           flexDirection: 'column',
         }}
       >
-        {/* AppBar mỏng phía trên nội dung, tone trắng + viền xanh nhạt */}
         <AppBar
           position="static"
           elevation={0}

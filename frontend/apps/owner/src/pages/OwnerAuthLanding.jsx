@@ -2,17 +2,17 @@ import { useEffect, useState } from 'react';
 import { Box, Button, Typography, Chip, Stack } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import RequestPageIcon from '@mui/icons-material/RequestPage';
+import BusinessIcon from '@mui/icons-material/Business';
 import { MainLayout, Sidebar } from '@booking/shared';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
 
 /**
- * Trang landing/auth cho client:
+ * Trang landing/auth cho owner:
  * - Bên trái: giới thiệu ngắn về hệ thống
- * - Bên phải: form đăng nhập/đăng ký hoặc chào mừng + nút đăng xuất nếu đã đăng nhập
+ * - Bên phải: form đăng nhập hoặc chào mừng + nút đăng xuất nếu đã đăng nhập
  */
-export default function ClientAuthLanding() {
+export default function OwnerAuthLanding() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -34,7 +34,7 @@ export default function ClientAuthLanding() {
         const parsed = JSON.parse(rawUser);
         setCurrentUser(parsed);
       } else {
-        setCurrentUser({ role: 'client' });
+        setCurrentUser({ role: 'owner' });
       }
     } catch {
       setCurrentUser(null);
@@ -64,13 +64,9 @@ export default function ClientAuthLanding() {
 
   const sidebarItems = [
     { text: 'Trang chủ', icon: HomeIcon, path: '/' },
-    { text: 'Map View', icon: DashboardIcon, path: '/maps' },
-    { text: 'Đặt sân', icon: DashboardIcon, path: '/book' },
-    {
-      text: 'Lịch sử đặt sân',
-      icon: RequestPageIcon,
-      path: '/history',
-    },
+    { text: 'Quản lý sân', icon: BusinessIcon, path: '/courts' },
+    { text: 'Quản lý các sân con', icon: DashboardIcon, path: '/sub-courts' },
+    { text: 'Quản lý đặt sân', icon: DashboardIcon, path: '/bookings' },
   ];
 
   const sidebarUser = currentUser
@@ -79,13 +75,13 @@ export default function ClientAuthLanding() {
           currentUser.fullName ||
           currentUser.name ||
           currentUser.email ||
-          'Người dùng',
-        role: currentUser.role || 'client',
+          'Chủ sân',
+        role: currentUser.role || 'owner',
         avatarUrl: currentUser.avatarUrl,
       }
     : {
-        name: 'Khách chơi',
-        role: 'client',
+        name: 'Chủ sân',
+        role: 'owner',
       };
 
   const sidebar = (
@@ -119,7 +115,7 @@ export default function ClientAuthLanding() {
           }}
         >
           <Chip
-            label="Nền tảng đặt sân cầu lông cho cộng đồng"
+            label="Nền tảng quản lý sân cầu lông cho chủ sân"
             sx={{
               alignSelf: 'flex-start',
               bgcolor: '#dcfce7',
@@ -139,9 +135,9 @@ export default function ClientAuthLanding() {
                 mb: 1.5,
               }}
             >
-              Badminton Hub – Đặt sân dễ dàng,
+              Badminton Hub – Quản lý sân dễ dàng,
               <br />
-              chơi hết mình cùng bạn bè.
+              phục vụ khách hàng tốt hơn.
             </Typography>
             <Typography
               variant="body1"
@@ -150,23 +146,23 @@ export default function ClientAuthLanding() {
                 maxWidth: 480,
               }}
             >
-              Tìm kiếm sân phù hợp, giữ chỗ nhanh chóng và quản lý lịch chơi của
-              bạn trong một nền tảng duy nhất. Tập trung vào trận đấu, còn lại
-              để Badminton Hub lo.
+              Quản lý sân, theo dõi đặt chỗ, xử lý thanh toán và tối ưu hóa hoạt
+              động kinh doanh của bạn trong một nền tảng duy nhất. Tập trung vào
+              phục vụ khách hàng, còn lại để Badminton Hub lo.
             </Typography>
           </Box>
 
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
             <Chip
-              label="Đặt sân theo giờ linh hoạt"
+              label="Quản lý sân và giá cả"
               sx={{ bgcolor: '#ecfdf3', color: '#15803d' }}
             />
             <Chip
-              label="Theo dõi lịch sử & thanh toán"
+              label="Theo dõi đặt chỗ & doanh thu"
               sx={{ bgcolor: '#eff6ff', color: '#1d4ed8' }}
             />
             <Chip
-              label="Kết nối chủ sân & người chơi"
+              label="Phân tích và báo cáo"
               sx={{ bgcolor: '#fef3c7', color: '#92400e' }}
             />
           </Stack>
@@ -205,7 +201,8 @@ export default function ClientAuthLanding() {
                   <strong>{sidebarUser.role}</strong>.
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                  Bạn có thể tiếp tục sử dụng hệ thống hoặc đăng xuất khi cần.
+                  Bạn có thể tiếp tục quản lý sân của mình hoặc đăng xuất khi
+                  cần.
                 </Typography>
               </Box>
 
@@ -250,8 +247,8 @@ export default function ClientAuthLanding() {
                 Bắt đầu với Badminton Hub
               </Typography>
               <Typography variant="body2" sx={{ color: '#4b5563' }}>
-                Đăng nhập hoặc tạo tài khoản miễn phí để đặt sân, quản lý lịch
-                chơi và theo dõi lịch sử đặt sân của bạn.
+                Đăng nhập để quản lý sân, theo dõi đặt chỗ và xem báo cáo doanh
+                thu của bạn.
               </Typography>
 
               <Stack
@@ -262,7 +259,7 @@ export default function ClientAuthLanding() {
                 <Button
                   variant="contained"
                   fullWidth
-                  onClick={() => navigate('/login?site=client')}
+                  onClick={() => navigate('/login?site=owner')}
                   sx={{
                     px: 3,
                     py: 1,
@@ -277,26 +274,6 @@ export default function ClientAuthLanding() {
                 >
                   Đăng nhập
                 </Button>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={() => navigate('/register')}
-                  sx={{
-                    px: 3,
-                    py: 1,
-                    borderRadius: 999,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    borderColor: '#22c55e',
-                    color: '#166534',
-                    '&:hover': {
-                      borderColor: '#16a34a',
-                      bgcolor: '#ecfdf3',
-                    },
-                  }}
-                >
-                  Đăng ký tài khoản
-                </Button>
               </Stack>
             </Box>
           )}
@@ -305,3 +282,4 @@ export default function ClientAuthLanding() {
     </MainLayout>
   );
 }
+

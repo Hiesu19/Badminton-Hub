@@ -25,6 +25,7 @@ const getS3PresignedUrl = async ({
   contentType,
   supperCourtId,
   position,
+  bookingId,
 }) => {
   let presignedEndpoint = '';
   let body = {};
@@ -56,6 +57,11 @@ const getS3PresignedUrl = async ({
       presignedEndpoint = '/uploads/presigned-supper-court-gallery-image';
       body = { supperCourtId, contentType, position };
       break;
+    case 'bookingBill':
+      if (!bookingId) throw new Error('Thiếu bookingId cho bill thanh toán');
+      presignedEndpoint = '/uploads/presigned-booking-bill-image';
+      body = { bookingId, contentType };
+      break;
     default:
       throw new Error('Loại upload không hợp lệ');
   }
@@ -83,7 +89,7 @@ const uploadToS3 = async (s3Data, file, contentType) => {
 };
 
 export async function uploadImageWithPresignedKey(options) {
-  const { type, file, supperCourtId, position } = options;
+  const { type, file, supperCourtId, position, bookingId } = options;
 
   if (!file) {
     throw new Error('File không được để trống');
@@ -95,6 +101,7 @@ export async function uploadImageWithPresignedKey(options) {
     contentType,
     supperCourtId,
     position,
+    bookingId,
   });
 
   const publicUrl = await uploadToS3(s3Data, file, contentType);

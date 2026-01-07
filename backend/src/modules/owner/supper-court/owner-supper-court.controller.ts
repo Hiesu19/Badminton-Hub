@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { OwnerSupperCourtService } from './owner-supper-court.service';
 import { OwnerAuth } from 'src/shared/decorators/role-auth.decorator';
@@ -6,6 +15,9 @@ import { CustomResponse } from 'src/shared/decorators/custom-response.decorator'
 import { SupperCourtResponseDto } from 'src/modules/admin/supper-court/dto/supper-court-response.dto';
 import { UpdateOwnerSupperCourtDto } from './dto/update-owner-supper-court.dto';
 import { UpdateOwnerPriceDto } from './dto/update-owner-price.dto';
+import { ListPricesQueryDto } from './dto/list-prices-query.dto';
+import { CopyPricesDto } from './dto/copy-prices.dto';
+import { UpdateOwnerBulkPriceDto } from './dto/update-owner-bulk-price.dto';
 
 @Controller('/owner/supper-court')
 @ApiTags('Owner - Supper Court')
@@ -45,10 +57,14 @@ export class OwnerSupperCourtController {
   @CustomResponse('string', {
     code: 200,
     message: 'Lấy danh sách bảng giá thành công',
-    description: '[owner] Danh sách bảng giá của cụm sân',
+    description:
+      '[owner] Danh sách bảng giá của cụm sân (có thể lọc theo thứ trong tuần)',
   })
-  async listPrices(@Req() req: any) {
-    return this.ownerSupperCourtService.listPrices(req.user.id);
+  async listPrices(@Req() req: any, @Query() query: ListPricesQueryDto) {
+    return this.ownerSupperCourtService.listPrices(
+      req.user.id,
+      query.dayOfWeek,
+    );
   }
 
   @Patch('prices/:priceId')
@@ -65,13 +81,37 @@ export class OwnerSupperCourtController {
     return this.ownerSupperCourtService.updatePrice(req.user.id, priceId, dto);
   }
 
-  @Post('prices/:priceId/delete')
+  @Post('prices/copy')
   @CustomResponse('string', {
     code: 200,
-    message: 'Xóa bảng giá thành công',
-    description: '[owner] Xóa cấu hình giá',
+    message: 'Copy cấu hình giá thành công',
+    description: '[owner] Copy cấu hình giá từ thứ này sang thứ khác',
   })
-  async deletePrice(@Req() req: any, @Param('priceId') priceId: string) {
-    return this.ownerSupperCourtService.deletePrice(req.user.id, priceId);
+  async copyPrices(@Req() req: any, @Body() dto: CopyPricesDto) {
+    return this.ownerSupperCourtService.copyPrices(
+      req.user.id,
+      dto.dayOfWeekFrom,
+      dto.dayOfWeekTo,
+    );
+  }
+
+  @Post('prices/bulk-update')
+  @CustomResponse('string', {
+    code: 200,
+    message: 'Cập nhật giá theo dải thời gian thành công',
+    description:
+      '[owner] Áp dụng một mức giá cho tất cả các slot 30p trong khoảng thời gian chỉ định của một thứ',
+  })
+  async bulkUpdatePrices(
+    @Req() req: any,
+    @Body() dto: UpdateOwnerBulkPriceDto,
+  ) {
+    return this.ownerSupperCourtService.bulkUpdatePrices(
+      req.user.id,
+      dto.dayOfWeek,
+      dto.startTime,
+      dto.endTime,
+      dto.pricePerHour,
+    );
   }
 }
