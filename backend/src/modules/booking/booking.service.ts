@@ -13,6 +13,8 @@ import { SubCourtEntity } from '../../database/entities/sub-court.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UploadBookingBillDto } from './dto/upload-booking-bill.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
+import { ListBookingResponseDto } from './dto/list-booking-query.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class BookingService {
@@ -288,7 +290,7 @@ export class BookingService {
     }
     const booking = await this.bookingRepository.findOne({
       where: { id: numericBookingId, user: { id: numericUserId } as any },
-      relations: ['items', 'supperCourt', 'user'],
+      relations: ['items', 'items.subCourt', 'supperCourt', 'user'],
     });
 
     if (!booking) {
@@ -303,15 +305,30 @@ export class BookingService {
     return this.bookingRepository.save(booking);
   }
 
-  async listByOwner(ownerId: string) {
-    return this.bookingRepository
+  async listByOwner(ownerId: string, date?: string) {
+    const queryBuilder = this.bookingRepository
       .createQueryBuilder('booking')
       .leftJoinAndSelect('booking.supperCourt', 'supperCourt')
       .leftJoinAndSelect('booking.items', 'items')
+      .leftJoinAndSelect('items.subCourt', 'subCourt')
+      .leftJoinAndSelect('booking.user', 'user')
       .leftJoin('supperCourt.user', 'owner')
-      .where('owner.id = :ownerId', { ownerId: Number(ownerId) })
-      .orderBy('booking.createdAt', 'DESC')
-      .getMany();
+      .where('owner.id = :ownerId', { ownerId: Number(ownerId) });
+
+    if (date) {
+      const normalizedDate = date.trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
+        throw new BadRequestException(
+          'Ngày không hợp lệ, định dạng YYYY-MM-DD (ví dụ: 2026-01-15)',
+        );
+      }
+      // Filter items theo date và chỉ lấy booking có ít nhất một item với date đó
+      queryBuilder.andWhere('items.date = :date', { date: normalizedDate });
+      queryBuilder.distinct(true);
+    }
+
+    const data = await queryBuilder.orderBy('booking.createdAt', 'DESC').getMany();
+    return plainToInstance(ListBookingResponseDto, data, { excludeExtraneousValues: true });
   }
 
   private async ensureOwnerAccess(ownerId: string, bookingId: string) {
@@ -332,6 +349,32 @@ export class BookingService {
     return booking;
   }
 
+  async findOneForOwner(ownerId: string, bookingId: string) {
+    const numericBookingId = Number(bookingId);
+    if (Number.isNaN(numericBookingId)) {
+      throw new BadRequestException('bookingId không hợp lệ');
+    }
+
+    const booking = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.supperCourt', 'supperCourt')
+      .leftJoinAndSelect('booking.items', 'items')
+      .leftJoinAndSelect('items.subCourt', 'subCourt')
+      .leftJoinAndSelect('booking.user', 'user')
+      .leftJoin('supperCourt.user', 'owner')
+      .where('booking.id = :id', { id: numericBookingId })
+      .andWhere('owner.id = :ownerId', { ownerId: Number(ownerId) })
+      .getOne();
+
+    if (!booking) {
+      throw new NotFoundException(
+        'Booking không tồn tại hoặc không thuộc sân của bạn',
+      );
+    }
+
+    return booking;
+  }
+
   async updateStatusByOwner(
     ownerId: string,
     bookingId: string,
@@ -342,11 +385,27 @@ export class BookingService {
     return this.bookingRepository.save(booking);
   }
 
-  async listAllForAdmin() {
-    return this.bookingRepository.find({
-      relations: ['items', 'supperCourt', 'user'],
-      order: { createdAt: 'DESC' },
-    });
+  async listAllForAdmin(date?: string) {
+    const queryBuilder = this.bookingRepository
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.items', 'items')
+      .leftJoinAndSelect('items.subCourt', 'subCourt')
+      .leftJoinAndSelect('booking.supperCourt', 'supperCourt')
+      .leftJoinAndSelect('booking.user', 'user');
+
+    // Nếu có filter theo ngày, chỉ lấy booking có items với date đó
+    if (date) {
+      const normalizedDate = date.trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
+        throw new BadRequestException(
+          'Ngày không hợp lệ, định dạng YYYY-MM-DD (ví dụ: 2026-01-15)',
+        );
+      }
+      queryBuilder.where('items.date = :date', { date: normalizedDate });
+      queryBuilder.distinct(true);
+    }
+
+    return queryBuilder.orderBy('booking.createdAt', 'DESC').getMany();
   }
 
   async getById(bookingId: string) {
@@ -356,7 +415,7 @@ export class BookingService {
     }
     const booking = await this.bookingRepository.findOne({
       where: { id: numericBookingId },
-      relations: ['items', 'supperCourt', 'user'],
+      relations: ['items', 'items.subCourt', 'supperCourt', 'user'],
     });
     if (!booking) {
       throw new NotFoundException('Booking không tồn tại');

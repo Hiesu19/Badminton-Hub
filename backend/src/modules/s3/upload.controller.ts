@@ -1,5 +1,5 @@
 import { Controller, Post, Body, Req } from '@nestjs/common';
-import { OwnerAuth, UserAuth } from 'src/shared/decorators/role-auth.decorator';
+import { AllAuth, OwnerAuth, UserAuth } from 'src/shared/decorators/role-auth.decorator';
 import { CustomResponse } from 'src/shared/decorators/custom-response.decorator';
 import { GetPresignedUrlResponseDto } from './dto/get-presigned-product-url-response.dto';
 import { PresignedSupperCourtGalleryImageDto } from './dto/presigned-product-image.dto';
@@ -26,7 +26,7 @@ export class UploadController {
   }
 
   @Post('presigned-avatar-image')
-  @UserAuth()
+  @AllAuth()
   @CustomResponse(GetPresignedUrlResponseDto, {
     description: '[user] Lấy key để upload avatar user',
     message: 'Lấy key để upload avatar user thành công',

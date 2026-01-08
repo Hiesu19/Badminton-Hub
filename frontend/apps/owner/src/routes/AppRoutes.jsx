@@ -3,6 +3,7 @@ import { ProfilePage, LoginPage, ForgotPasswordPage } from '@booking/shared';
 import OwnerAuthLanding from '../pages/OwnerAuthLanding.jsx';
 import SubCourtsPage from '../pages/SubCourtsPage.jsx';
 import OwnerCourtsPage from '../pages/OwnerCourtsPage.jsx';
+import OwnerBookingsPage from '../pages/OwnerBookingsPage.jsx';
 
 export default function AppRoutes() {
   return (
@@ -13,6 +14,8 @@ export default function AppRoutes() {
       <Route path="/courts" element={<OwnerCourtsPage />} />
       {/* Trang quản lý sân con */}
       <Route path="/sub-courts" element={<SubCourtsPage />} />
+      {/* Trang quản lý đặt sân */}
+      <Route path="/bookings" element={<OwnerBookingsPage />} />
       {/* Trang đăng nhập dùng chung (client/owner/admin) */}
       <Route path="/login" element={<LoginPage />} />
       {/* Trang quên mật khẩu (OTP + đổi mật khẩu) */}

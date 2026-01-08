@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -21,6 +22,11 @@ import {
 import { CustomResponse } from 'src/shared/decorators/custom-response.decorator';
 import { BookingEntity } from '../../database/entities/booking.entity';
 import { CreateBookingResponseDto } from './dto/create-booking-response.dto';
+import {
+  ListBookingQueryDto,
+  ListBookingResponseDto,
+} from './dto/list-booking-query.dto';
+import { BookingDetailResponseDto } from './dto/booking-detail-response.dto';
 
 @Controller('bookings')
 @ApiTags('Bookings')
@@ -66,8 +72,9 @@ export class BookingController {
 
   @Get('me/:bookingId')
   @UserAuth()
-  @CustomResponse(BookingEntity, {
+  @CustomResponse(BookingDetailResponseDto, {
     message: 'Chi tiết booking của user',
+    description: '[user] Lấy thông tin chi tiết booking của mình',
   })
   async getMyBooking(
     @Req() req: Request & { user?: any },
@@ -90,11 +97,30 @@ export class BookingController {
 
   @Get('owner')
   @OwnerAuth()
-  @CustomResponse([BookingEntity], {
-    message: 'Danh sách booking trong supper court của owner',
+  // @CustomResponse([ListBookingResponseDto], {
+  //   message: 'Danh sách booking trong supper court của owner',
+  //   description: '[owner] Danh sách booking (có thể lọc theo ngày)',
+  // })
+  async listOwnerBookings(
+    @Req() req: Request & { user?: any },
+    @Query() query: ListBookingQueryDto,
+  ) {
+    const data = await this.bookingService.listByOwner(req.user.id, query.date);
+    console.log(data);
+    return data;
+  }
+
+  @Get('owner/:bookingId')
+  @OwnerAuth()
+  @CustomResponse(BookingDetailResponseDto, {
+    message: 'Chi tiết booking',
+    description: '[owner] Lấy thông tin chi tiết booking trong sân của mình',
   })
-  async listOwnerBookings(@Req() req: Request & { user?: any }) {
-    return this.bookingService.listByOwner(req.user.id);
+  async getOwnerBooking(
+    @Req() req: Request & { user?: any },
+    @Param('bookingId') bookingId: string,
+  ) {
+    return this.bookingService.findOneForOwner(req.user.id, bookingId);
   }
 
   @Patch('owner/:bookingId/status')
@@ -112,17 +138,19 @@ export class BookingController {
 
   @Get('admin')
   @AdminAuth()
-  @CustomResponse([BookingEntity], {
+  @CustomResponse([ListBookingResponseDto], {
     message: 'Danh sách booking toàn hệ thống',
+    description: '[admin] Danh sách booking (có thể lọc theo ngày)',
   })
-  async listAdminBookings() {
-    return this.bookingService.listAllForAdmin();
+  async listAdminBookings(@Query() query: ListBookingQueryDto) {
+    return this.bookingService.listAllForAdmin(query.date);
   }
 
   @Get('admin/:bookingId')
   @AdminAuth()
-  @CustomResponse(BookingEntity, {
+  @CustomResponse(BookingDetailResponseDto, {
     message: 'Chi tiết booking',
+    description: '[admin] Lấy thông tin chi tiết booking',
   })
   async getAdminBooking(@Param('bookingId') bookingId: string) {
     return this.bookingService.getById(bookingId);
