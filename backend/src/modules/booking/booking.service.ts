@@ -181,6 +181,13 @@ export class BookingService {
       .andWhere('booking.status NOT IN (:...cancelled)', {
         cancelled: [BookingStatus.CANCELLED, BookingStatus.REJECTED],
       })
+      .andWhere(
+        '(booking.status != :pending OR booking.imgBill IS NOT NULL OR booking.expiredAt > :now)',
+        {
+          pending: BookingStatus.PENDING,
+          now: new Date(),
+        },
+      )
       .getMany();
 
     for (const parsed of parsedItems) {
@@ -282,6 +289,47 @@ export class BookingService {
     });
   }
 
+  async listByUserAndDate(userId: string, date: string, page = 1, limit = 10) {
+    const normalizedDate = date.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
+      throw new BadRequestException(
+        'Ngày không hợp lệ, định dạng YYYY-MM-DD (ví dụ: 2026-01-15)',
+      );
+    }
+
+    const pageNumber = Number(page) || 1;
+    const limitNumber = Number(limit) || 10;
+
+    const safePage = pageNumber < 1 ? 1 : pageNumber;
+    const safeLimit = limitNumber < 1 ? 10 : limitNumber;
+
+    const queryBuilder = this.bookingRepository
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.items', 'items')
+      .leftJoinAndSelect('booking.supperCourt', 'supperCourt')
+      .leftJoinAndSelect('booking.user', 'user')
+      .where('user.id = :userId', { userId: Number(userId) })
+      .andWhere('items.date = :date', { date: normalizedDate })
+      .andWhere('booking.status NOT IN (:...cancelled)', {
+        cancelled: [BookingStatus.CANCELLED, BookingStatus.REJECTED],
+      })
+      .andWhere(
+        '(booking.status != :pending OR booking.imgBill IS NOT NULL OR booking.expiredAt > :now)',
+        {
+          pending: BookingStatus.PENDING,
+          now: new Date(),
+        },
+      )
+      .orderBy('booking.createdAt', 'DESC')
+      .skip((safePage - 1) * safeLimit)
+      .take(safeLimit);
+
+    const data = await queryBuilder.getMany();
+    return plainToInstance(ListBookingResponseDto, data, {
+      excludeExtraneousValues: true,
+    });
+  }
+
   async findOneForUser(userId: string, bookingId: string) {
     const numericUserId = Number(userId);
     const numericBookingId = Number(bookingId);
@@ -327,8 +375,12 @@ export class BookingService {
       queryBuilder.distinct(true);
     }
 
-    const data = await queryBuilder.orderBy('booking.createdAt', 'DESC').getMany();
-    return plainToInstance(ListBookingResponseDto, data, { excludeExtraneousValues: true });
+    const data = await queryBuilder
+      .orderBy('booking.createdAt', 'DESC')
+      .getMany();
+    return plainToInstance(ListBookingResponseDto, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   private async ensureOwnerAccess(ownerId: string, bookingId: string) {

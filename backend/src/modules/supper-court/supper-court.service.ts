@@ -149,6 +149,16 @@ export class SupperCourtService {
       .leftJoin('subCourt.supperCourt', 'supperCourt')
       .where('supperCourt.id = :supperCourtId', { supperCourtId: numericId })
       .andWhere('item.date = :date', { date: normalizedDate })
+      .andWhere('booking.status NOT IN (:...cancelled)', {
+        cancelled: [BookingStatus.CANCELLED, BookingStatus.REJECTED],
+      })
+      .andWhere(
+        '(booking.status != :pending OR booking.imgBill IS NOT NULL OR booking.expiredAt > :now)',
+        {
+          pending: BookingStatus.PENDING,
+          now: new Date(),
+        },
+      )
       .orderBy('subCourt.id', 'ASC')
       .addOrderBy('item.startTime', 'ASC')
       .getMany();

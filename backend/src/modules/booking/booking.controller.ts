@@ -27,6 +27,7 @@ import {
   ListBookingResponseDto,
 } from './dto/list-booking-query.dto';
 import { BookingDetailResponseDto } from './dto/booking-detail-response.dto';
+import { ListMyBookingByDateDto } from './dto/list-my-booking-by-date.dto';
 
 @Controller('bookings')
 @ApiTags('Bookings')
@@ -61,13 +62,24 @@ export class BookingController {
     return this.bookingService.uploadBill(req.user.id, bookingId, dto);
   }
 
-  @Get('me')
+  @Post('me')
   @UserAuth()
-  @CustomResponse([BookingEntity], {
-    message: 'Lấy danh sách booking của user',
-  })
-  async listMine(@Req() req: Request & { user?: any }) {
-    return this.bookingService.listByUser(req.user.id);
+  // @CustomResponse(ListBookingResponseDto, {
+  //   message: 'Lấy danh sách booking của user theo ngày',
+  //   isPagination: true,
+  // })
+  async listMine(
+    @Req() req: Request & { user?: any },
+    @Body() dto: ListMyBookingByDateDto,
+  ) {
+    const data = await this.bookingService.listByUserAndDate(
+      req.user.id,
+      dto.date,
+      dto.page,
+      dto.limit,
+    );
+    console.log(data);
+    return data;
   }
 
   @Get('me/:bookingId')
@@ -92,7 +104,7 @@ export class BookingController {
     @Req() req: Request & { user?: any },
     @Param('bookingId') bookingId: string,
   ) {
-    return this.bookingService.cancelByUser(req.user.id, bookingId);
+    await this.bookingService.cancelByUser(req.user.id, bookingId);
   }
 
   @Get('owner')
