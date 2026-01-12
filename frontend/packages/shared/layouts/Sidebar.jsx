@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import MainLayout from './MainLayout.jsx';
 
 export default function Sidebar({
   user,
@@ -154,5 +155,30 @@ export default function Sidebar({
         </Box>
       )}
     </Box>
+  );
+}
+
+export function SidebarPage({
+  user,
+  items,
+  profilePath,
+  canOpenProfile,
+  onLogout,
+  children,
+}) {
+  return (
+    <MainLayout
+      sidebar={
+        <Sidebar
+          user={user}
+          items={items}
+          profilePath={profilePath}
+          canOpenProfile={canOpenProfile}
+          onLogout={onLogout}
+        />
+      }
+    >
+      {children}
+    </MainLayout>
   );
 }

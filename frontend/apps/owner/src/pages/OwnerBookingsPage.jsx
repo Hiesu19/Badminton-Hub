@@ -23,7 +23,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import { MainLayout, Sidebar } from '@booking/shared';
+import { SidebarPage } from '@booking/shared';
 import HomeIcon from '@mui/icons-material/Home';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -271,16 +271,12 @@ export default function OwnerBookingsPage() {
         role: 'owner',
       };
 
-  const sidebar = (
-    <Sidebar
+  return (
+    <SidebarPage
       user={sidebarUser}
       items={sidebarItems}
       canOpenProfile={!!currentUser}
-    />
-  );
-
-  return (
-    <MainLayout sidebar={sidebar}>
+    >
       <Box>
         <Box
           sx={{
@@ -702,6 +698,6 @@ export default function OwnerBookingsPage() {
           <Button onClick={() => setDetailDialogOpen(false)}>Đóng</Button>
         </DialogActions>
       </Dialog>
-    </MainLayout>
+    </SidebarPage>
   );
 }

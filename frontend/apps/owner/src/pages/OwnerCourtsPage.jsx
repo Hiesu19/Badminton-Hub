@@ -5,16 +5,14 @@ import {
   CardContent,
   Typography,
   Button,
-  Grid,
   Chip,
   CircularProgress,
   Alert,
+  Stack,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import { MainLayout, Sidebar } from '@booking/shared';
-import HomeIcon from '@mui/icons-material/Home';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import BusinessIcon from '@mui/icons-material/Business';
+import { SidebarPage } from '@booking/shared';
+import { sidebarItemsOwner } from '@booking/shared/const/sidebarItems.js';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
@@ -70,12 +68,7 @@ export default function OwnerCourtsPage() {
     toast.success('Cập nhật thông tin cụm sân thành công');
   };
 
-  const sidebarItems = [
-    { text: 'Trang chủ', icon: HomeIcon, path: '/' },
-    { text: 'Quản lý sân', icon: BusinessIcon, path: '/courts' },
-    { text: 'Quản lý đặt sân', icon: DashboardIcon, path: '/bookings' },
-  ];
-
+  const sidebarItems = sidebarItemsOwner;
   const sidebarUser = currentUser
     ? {
         name:
@@ -91,16 +84,12 @@ export default function OwnerCourtsPage() {
         role: 'owner',
       };
 
-  const sidebar = (
-    <Sidebar
+  return (
+    <SidebarPage
       user={sidebarUser}
       items={sidebarItems}
       canOpenProfile={!!currentUser}
-    />
-  );
-
-  return (
-    <MainLayout sidebar={sidebar}>
+    >
       <Box>
         <Box
           sx={{
@@ -132,185 +121,179 @@ export default function OwnerCourtsPage() {
             <CircularProgress />
           </Box>
         ) : courtData ? (
-          <Grid container spacing={3} direction="column">
-            {/* Thông tin cụm sân */}
-            <Grid item xs={12}>
-              <Card
+          <Stack spacing={3}>
+            <Card
+              sx={{
+                height: '100%',
+                borderRadius: 3,
+                boxShadow: '0 18px 35px rgba(15, 46, 36, 0.12)',
+                overflow: 'hidden',
+              }}
+            >
+              <CardContent
                 sx={{
-                  height: '100%',
-                  borderRadius: 3,
-                  boxShadow: '0 18px 35px rgba(15, 46, 36, 0.12)',
-                  overflow: 'hidden',
+                  p: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2.5,
                 }}
               >
-                <CardContent
+                <Box
                   sx={{
-                    p: 3,
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2.5,
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 0.5,
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      mb: 0.5,
-                    }}
-                  >
-                    <Box>
-                      <Typography
-                        variant="overline"
-                        sx={{ color: '#6b7280', letterSpacing: 1 }}
-                      >
-                        CỤM SÂN CỦA BẠN
-                      </Typography>
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: 800, color: '#052e16' }}
-                      >
-                        {courtData.name || 'Chưa đặt tên cụm sân'}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label="Đang hoạt động"
-                      size="small"
-                      sx={{
-                        bgcolor: '#dcfce7',
-                        color: '#15803d',
-                        fontWeight: 600,
-                      }}
-                    />
+                  <Box>
+                    <Typography
+                      variant="overline"
+                      sx={{ color: '#6b7280', letterSpacing: 1 }}
+                    >
+                      CỤM SÂN CỦA BẠN
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 800, color: '#052e16' }}
+                    >
+                      {courtData.name || 'Chưa đặt tên cụm sân'}
+                    </Typography>
                   </Box>
+                  <Chip
+                    label="Đang hoạt động"
+                    size="small"
+                    sx={{
+                      bgcolor: '#dcfce7',
+                      color: '#15803d',
+                      fontWeight: 600,
+                    }}
+                  />
+                </Box>
 
-                  {courtData.imageUrl && (
-                    <Box
-                      component="img"
-                      src={courtData.imageUrl}
-                      alt={courtData.name}
-                      sx={{
-                        width: '100%',
-                        maxWidth: 640,
-                        maxHeight: 320,
-                        objectFit: 'cover',
-                        borderRadius: 2,
-                        border: '1px solid #e5e7eb',
-                        display: 'block',
-                        mx: 'auto',
-                      }}
-                    />
+                {courtData.imageUrl && (
+                  <Box
+                    component="img"
+                    src={courtData.imageUrl}
+                    alt={courtData.name}
+                    sx={{
+                      width: '100%',
+                      maxWidth: 640,
+                      maxHeight: 320,
+                      objectFit: 'cover',
+                      borderRadius: 2,
+                      border: '1px solid #e5e7eb',
+                      display: 'block',
+                      mx: 'auto',
+                    }}
+                  />
+                )}
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1.5,
+                    mt: courtData.imageUrl ? 0.5 : 1,
+                  }}
+                >
+                  {courtData.address && (
+                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+                      <LocationOnIcon
+                        fontSize="small"
+                        sx={{ mt: '2px', color: '#16a34a' }}
+                      />
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: '#6b7280', mb: 0.25 }}
+                        >
+                          Địa chỉ
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {courtData.address}
+                        </Typography>
+                      </Box>
+                    </Box>
                   )}
 
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 1.5,
-                      mt: courtData.imageUrl ? 0.5 : 1,
-                    }}
-                  >
-                    {courtData.address && (
-                      <Box sx={{ display: 'flex', gap: 1.5 }}>
-                        <LocationOnIcon
-                          fontSize="small"
-                          sx={{ mt: '2px', color: '#16a34a' }}
-                        />
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: '#6b7280', mb: 0.25 }}
-                          >
-                            Địa chỉ
-                          </Typography>
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            {courtData.address}
-                          </Typography>
-                        </Box>
+                  {courtData.phone && (
+                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+                      <PhoneIcon
+                        fontSize="small"
+                        sx={{ mt: '2px', color: '#16a34a' }}
+                      />
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: '#6b7280', mb: 0.25 }}
+                        >
+                          Số điện thoại
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {courtData.phone}
+                        </Typography>
                       </Box>
-                    )}
+                    </Box>
+                  )}
 
-                    {courtData.phone && (
-                      <Box sx={{ display: 'flex', gap: 1.5 }}>
-                        <PhoneIcon
-                          fontSize="small"
-                          sx={{ mt: '2px', color: '#16a34a' }}
-                        />
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: '#6b7280', mb: 0.25 }}
-                          >
-                            Số điện thoại
-                          </Typography>
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            {courtData.phone}
-                          </Typography>
-                        </Box>
+                  {courtData.email && (
+                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+                      <EmailIcon
+                        fontSize="small"
+                        sx={{ mt: '2px', color: '#16a34a' }}
+                      />
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: '#6b7280', mb: 0.25 }}
+                        >
+                          Email
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {courtData.email}
+                        </Typography>
                       </Box>
-                    )}
+                    </Box>
+                  )}
 
-                    {courtData.email && (
-                      <Box sx={{ display: 'flex', gap: 1.5 }}>
-                        <EmailIcon
-                          fontSize="small"
-                          sx={{ mt: '2px', color: '#16a34a' }}
-                        />
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: '#6b7280', mb: 0.25 }}
-                          >
-                            Email
-                          </Typography>
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            {courtData.email}
-                          </Typography>
-                        </Box>
+                  {courtData.website && (
+                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+                      <LanguageIcon
+                        fontSize="small"
+                        sx={{ mt: '2px', color: '#16a34a' }}
+                      />
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: '#6b7280', mb: 0.25 }}
+                        >
+                          Website
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          component="a"
+                          href={courtData.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            color: '#16a34a',
+                            textDecoration: 'none',
+                            fontWeight: 500,
+                            '&:hover': { textDecoration: 'underline' },
+                          }}
+                        >
+                          {courtData.website}
+                        </Typography>
                       </Box>
-                    )}
+                    </Box>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
 
-                    {courtData.website && (
-                      <Box sx={{ display: 'flex', gap: 1.5 }}>
-                        <LanguageIcon
-                          fontSize="small"
-                          sx={{ mt: '2px', color: '#16a34a' }}
-                        />
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: '#6b7280', mb: 0.25 }}
-                          >
-                            Website
-                          </Typography>
-                          <Typography
-                            variant="body1"
-                            component="a"
-                            href={courtData.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{
-                              color: '#16a34a',
-                              textDecoration: 'none',
-                              fontWeight: 500,
-                              '&:hover': { textDecoration: 'underline' },
-                            }}
-                          >
-                            {courtData.website}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Quản lý giá */}
-            <Grid item xs={12}>
-              <PriceManagement />
-            </Grid>
-          </Grid>
+            <PriceManagement />
+          </Stack>
         ) : (
           <Alert severity="warning">
             Không tìm thấy thông tin cụm sân. Vui lòng liên hệ quản trị viên.
@@ -324,6 +307,6 @@ export default function OwnerCourtsPage() {
         courtData={courtData}
         onSuccess={handleEditSuccess}
       />
-    </MainLayout>
+    </SidebarPage>
   );
 }

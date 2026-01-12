@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { SupperCourtModule } from './supper-court/supper-court.module';
 import { AdminUserModule } from './user/admin-user.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
-  imports: [SupperCourtModule, AdminUserModule],
+  imports: [DashboardModule, SupperCourtModule, AdminUserModule],
 })
 export class AdminModule {}

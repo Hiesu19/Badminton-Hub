@@ -19,7 +19,11 @@ const AUTH_URLS = [
   '/cart',
   '/reviews',
   '/payment',
+  '/payments',
   '/notifications',
+  '/bookings',
+  '/bookings/me',
+  '/owner',
 ];
 
 const getRefreshTokenPayload = (data) => data?.data ?? data ?? {};

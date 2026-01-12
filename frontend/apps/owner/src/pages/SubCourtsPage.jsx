@@ -23,10 +23,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import HomeIcon from '@mui/icons-material/Home';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import BusinessIcon from '@mui/icons-material/Business';
-import { MainLayout, Sidebar } from '@booking/shared';
+import { sidebarItemsOwner } from '@booking/shared/const/sidebarItems.js';
+import { SidebarPage } from '@booking/shared';
 import toast from 'react-hot-toast';
 import {
   fetchSubCourts,
@@ -135,12 +133,7 @@ export default function SubCourtsPage() {
     }
   };
 
-  const sidebarItems = [
-    { text: 'Trang chủ', icon: HomeIcon, path: '/' },
-    { text: 'Quản lý sân', icon: BusinessIcon, path: '/courts' },
-    { text: 'Sân con', icon: DashboardIcon, path: '/sub-courts' },
-    { text: 'Quản lý đặt sân', icon: DashboardIcon, path: '/bookings' },
-  ];
+  const sidebarItems = sidebarItemsOwner;
 
   const sidebarUser = currentUser
     ? {
@@ -157,16 +150,12 @@ export default function SubCourtsPage() {
         role: 'owner',
       };
 
-  const sidebar = (
-    <Sidebar
+  return (
+    <SidebarPage
       user={sidebarUser}
       items={sidebarItems}
       canOpenProfile={!!currentUser}
-    />
-  );
-
-  return (
-    <MainLayout sidebar={sidebar}>
+    >
       <Box>
         <Box
           sx={{
@@ -378,7 +367,7 @@ export default function SubCourtsPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </MainLayout>
+    </SidebarPage>
   );
 }
 

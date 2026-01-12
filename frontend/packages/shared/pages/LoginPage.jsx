@@ -5,12 +5,14 @@ import MainLayout from '../layouts/MainLayout.jsx';
 import Sidebar from '../layouts/Sidebar.jsx';
 import AuthLoginForm from '../auth/AuthLoginForm.jsx';
 
-export default function LoginPage() {
+export default function LoginPage({ defaultSite = null }) {
   const location = useLocation();
   const navigate = useNavigate();
 
   const searchParams = new URLSearchParams(location.search);
-  const site = searchParams.get('site') || 'client';
+  const siteFromState = location.state?.site;
+  const site =
+    siteFromState || searchParams.get('site') || defaultSite || 'client';
 
   useEffect(() => {
     document.title = 'Đăng nhập - Badminton Hub';
@@ -20,8 +22,7 @@ export default function LoginPage() {
     try {
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
-    } catch {
-    }
+    } catch {}
 
     if (site === 'owner') {
       navigate('/', { replace: true });
@@ -51,11 +52,7 @@ export default function LoginPage() {
         ];
 
   const sidebar = (
-    <Sidebar
-      user={null}
-      items={sidebarItems}
-      canOpenProfile={false}
-    />
+    <Sidebar user={null} items={sidebarItems} canOpenProfile={false} />
   );
 
   return (

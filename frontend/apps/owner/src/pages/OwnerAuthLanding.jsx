@@ -259,7 +259,9 @@ export default function OwnerAuthLanding() {
                 <Button
                   variant="contained"
                   fullWidth
-                  onClick={() => navigate('/login?site=owner')}
+                  onClick={() =>
+                    navigate('/login', { state: { site: 'owner' } })
+                  }
                   sx={{
                     px: 3,
                     py: 1,
@@ -282,4 +284,3 @@ export default function OwnerAuthLanding() {
     </MainLayout>
   );
 }
-

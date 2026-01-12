@@ -1,34 +1,49 @@
 import { Routes, Route } from 'react-router-dom';
 import {
-    ProfilePage,
-    LoginPage,
-    RegisterPage,
-    ForgotPasswordPage,
+  ProfilePage,
+  LoginPage,
+  RegisterPage,
+  ForgotPasswordPage,
 } from '@booking/shared';
 import ClientAuthLanding from '../pages/ClientAuthLanding.jsx';
 import ClientMapsPage from '../pages/ClientMapsPage.jsx';
 import ClientBookCourtPage from '../pages/ClientBookCourtPage.jsx';
 import ClientHistoryPage from '../pages/ClientHistoryPage.jsx';
+import { RequireUserAuth } from '@booking/shared/middleware/auth-role.js';
 
 export default function AppRoutes() {
-    return (
-        <Routes>
-            {/* Landing + Auth cho client */}
-            <Route path="/" element={<ClientAuthLanding />} />
-            {/* Trang bản đồ các sân */}
-            <Route path="/maps" element={<ClientMapsPage />} />
-            {/* Trang đặt sân riêng cho từng sân (?courtId=...) */}
-            <Route path="/book" element={<ClientBookCourtPage />} />
-            {/* Lịch sử đặt sân của user */}
-            <Route path="/history" element={<ClientHistoryPage />} />
-            {/* Trang đăng nhập dùng chung (client/owner/admin) */}
-            <Route path="/login" element={<LoginPage />} />
-            {/* Trang đăng ký người chơi */}
-            <Route path="/register" element={<RegisterPage />} />
-            {/* Trang quên mật khẩu (OTP + đổi mật khẩu) */}
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            {/* Trang thông tin cá nhân dùng chung */}
-            <Route path="/profile" element={<ProfilePage />} />
-        </Routes>
-    );
+  return (
+    <Routes>
+      <Route path="/" element={<ClientAuthLanding />} />
+      <Route path="/maps" element={<ClientMapsPage />} />
+      <Route
+        path="/book"
+        element={
+          <RequireUserAuth>
+            <ClientBookCourtPage />
+          </RequireUserAuth>
+        }
+      />
+      {/* Lịch sử đặt sân của user */}
+      <Route
+        path="/history"
+        element={
+          <RequireUserAuth>
+            <ClientHistoryPage />
+          </RequireUserAuth>
+        }
+      />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route
+        path="/profile"
+        element={
+          <RequireUserAuth>
+            <ProfilePage />
+          </RequireUserAuth>
+        }
+      />
+    </Routes>
+  );
 }
