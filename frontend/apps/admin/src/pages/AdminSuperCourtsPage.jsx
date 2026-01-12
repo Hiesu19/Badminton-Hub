@@ -35,6 +35,7 @@ import {
   updateAdminSuperCourt,
   deleteAdminSuperCourt,
 } from '../services/adminSuperCourtService.js';
+import AdminSuperCourtDetailDialog from '../components/AdminSuperCourtDetailDialog.jsx';
 const STATUS_OPTIONS = [
   { label: 'Tất cả', value: '' },
   { label: 'Verifying', value: 'verifying' },
@@ -58,6 +59,8 @@ export default function AdminSuperCourtsPage() {
     name: '',
     address: '',
   });
+  const [detailCourt, setDetailCourt] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [sidebarUser, setSidebarUser] = useState(null);
 
   useEffect(() => {
@@ -153,6 +156,18 @@ export default function AdminSuperCourtsPage() {
       loadSuperCourts();
     } catch (err) {
       showErrorToast(err?.response?.data?.message || 'Không thể xóa sân.');
+    }
+  };
+
+  const handleOpenCourtDetail = async (id) => {
+    try {
+      const res = await fetchAdminSuperCourtDetail(id);
+      setDetailCourt(res.data?.data ?? null);
+      setDetailOpen(true);
+    } catch (err) {
+      showErrorToast(
+        err?.response?.data?.message || 'Không thể lấy thông tin sân.',
+      );
     }
   };
 
@@ -284,6 +299,13 @@ export default function AdminSuperCourtsPage() {
                         </Button>
                         <Button
                           size="small"
+                          variant="text"
+                          onClick={() => handleOpenCourtDetail(row.id)}
+                        >
+                          Chi tiết
+                        </Button>
+                        <Button
+                          size="small"
                           variant="outlined"
                           color="error"
                           startIcon={<Delete fontSize="small" />}
@@ -366,6 +388,11 @@ export default function AdminSuperCourtsPage() {
             </Button>
           </DialogActions>
         </Dialog>
+        <AdminSuperCourtDetailDialog
+          open={detailOpen}
+          court={detailCourt}
+          onClose={() => setDetailOpen(false)}
+        />
       </Stack>
     </SidebarPage>
   );

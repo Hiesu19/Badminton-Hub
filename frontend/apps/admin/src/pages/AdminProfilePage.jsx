@@ -4,7 +4,6 @@ import { sidebarItemsAdmin } from '@booking/shared/const/sidebarItems.js';
 import ProfilePage from '@booking/shared/pages/ProfilePage.jsx';
 export default function AdminProfilePage() {
   const [sidebarUser, setSidebarUser] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

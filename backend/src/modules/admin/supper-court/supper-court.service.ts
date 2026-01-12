@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
+import { BookingEntity } from '../../../database/entities/booking.entity';
 import { SupperCourtEntity } from '../../../database/entities/supper-court.entity';
 import { SupperCourtPriceEntity } from '../../../database/entities/price-court.entity';
 import { CreateSupperCourtDto } from './dto/create-supper-court.dto';
@@ -18,6 +19,8 @@ export class SupperCourtService {
     private readonly supperCourtRepository: Repository<SupperCourtEntity>,
     @InjectRepository(SupperCourtPriceEntity)
     private readonly priceRepository: Repository<SupperCourtPriceEntity>,
+    @InjectRepository(BookingEntity)
+    private readonly bookingRepository: Repository<BookingEntity>,
   ) {}
 
   async create(ownerId: string, dto: CreateSupperCourtDto) {
@@ -129,13 +132,20 @@ export class SupperCourtService {
 
     const supperCourt = await this.supperCourtRepository.findOne({
       where: { id: numericId },
+      relations: ['user', 'images'],
     });
 
     if (!supperCourt) {
       throw new NotFoundException('Sân không tồn tại');
     }
 
-    return supperCourt;
+    const bookingCount = await this.countCourtBookings(supperCourt.id);
+
+    return {
+      ...supperCourt,
+      images: supperCourt.images ?? [],
+      bookingCount,
+    };
   }
 
   async update(id: string, dto: UpdateSupperCourtDto) {
@@ -180,5 +190,15 @@ export class SupperCourtService {
     await this.supperCourtRepository.remove(supperCourt);
 
     return 'Xóa sân thành công';
+  }
+
+  private async countCourtBookings(supperCourtId: number) {
+    const result = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .select('COUNT(booking.id)', 'total')
+      .where('booking.supper_court_id = :supperCourtId', { supperCourtId })
+      .getRawOne();
+
+    return Number(result?.total ?? 0);
   }
 }

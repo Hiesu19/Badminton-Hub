@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
+import { BookingEntity } from '../../../database/entities/booking.entity';
 import { User } from '../../../database/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/shared/enums/user.enum';
@@ -18,6 +19,8 @@ export class AdminUserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(BookingEntity)
+    private readonly bookingRepository: Repository<BookingEntity>,
     private readonly sendEmailService: SendEmailService,
     private readonly configService: ConfigService,
   ) {}
@@ -147,6 +150,42 @@ export class AdminUserService {
     }
 
     return owner;
+  }
+
+  async getUserDetail(id: string) {
+    const numericId = Number(id);
+    if (Number.isNaN(numericId)) {
+      throw new BadRequestException('Id không hợp lệ');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: numericId },
+    });
+    if (!user) {
+      throw new NotFoundException('User không tồn tại');
+    }
+
+    const bookingStats = await this.countUserBookings(numericId);
+
+    return {
+      ...user,
+      bookingCount: bookingStats.total,
+      bookedCourtCount: bookingStats.distinctCourts,
+    };
+  }
+
+  private async countUserBookings(userId: number) {
+    const result = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .select('COUNT(booking.id)', 'total')
+      .addSelect('COUNT(DISTINCT booking.supper_court_id)', 'distinctCourts')
+      .where('booking.user_id = :userId', { userId })
+      .getRawOne();
+
+    return {
+      total: Number(result?.total ?? 0),
+      distinctCourts: Number(result?.distinctCourts ?? 0),
+    };
   }
 
   async updateOwner(id: string, dto: UpdateOwnerDto) {

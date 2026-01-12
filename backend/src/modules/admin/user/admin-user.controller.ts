@@ -13,6 +13,7 @@ import { AdminUserService } from './admin-user.service';
 import { AdminAuth } from 'src/shared/decorators/role-auth.decorator';
 import { CustomResponse } from 'src/shared/decorators/custom-response.decorator';
 import { AdminUserResponseDto } from './dto/admin-user-response.dto';
+import { AdminUserDetailResponseDto } from './dto/admin-user-detail-response.dto';
 import { PaginationAdminUserDto } from './dto/pagination-admin-user.dto';
 import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import { UpdateOwnerDto } from './dto/update-owner.dto';
@@ -32,6 +33,16 @@ export class AdminUserController {
   })
   async listUsers(@Query() query: PaginationAdminUserDto) {
     return this.adminUserService.listUsers(query);
+  }
+
+  @Get(':id')
+  @CustomResponse(AdminUserDetailResponseDto, {
+    code: 200,
+    message: 'Lấy chi tiết user thành công',
+    description: '[admin] Lấy chi tiết user theo id (bao gồm số booking)',
+  })
+  async getUserDetail(@Param('id') id: string) {
+    return this.adminUserService.getUserDetail(id);
   }
 
   @Delete(':id')
@@ -55,6 +66,8 @@ export class AdminUserController {
   async createOwnerFromUser(@Param('userId') userId: string) {
     return this.adminUserService.createOwnerFromUser(userId);
   }
+
+
 
   @Get('owners/:id')
   @CustomResponse(AdminUserResponseDto, {

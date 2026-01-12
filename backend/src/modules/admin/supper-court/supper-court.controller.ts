@@ -20,6 +20,7 @@ import { SupperCourtService } from './supper-court.service';
 import { CreateSupperCourtDto } from './dto/create-supper-court.dto';
 import { UpdateSupperCourtDto } from './dto/update-supper-court.dto';
 import { SupperCourtResponseDto } from './dto/supper-court-response.dto';
+import { SupperCourtDetailResponseDto } from './dto/supper-court-detail-response.dto';
 import { SupperCourtPaginationDto } from './dto/pagination-supper-court.dto';
 
 @Controller('/supper-courts')
@@ -52,10 +53,11 @@ export class SupperCourtController {
 
   @Get(':id')
   @AdminAuth()
-  @CustomResponse(SupperCourtResponseDto, {
+  @CustomResponse(SupperCourtDetailResponseDto, {
     code: 200,
     message: 'Lấy chi tiết sân thành công',
-    description: '[admin] Lấy chi tiết sân theo id',
+    description:
+      '[admin] Lấy chi tiết sân theo id, bao gồm ảnh, owner, booking count',
   })
   async findOne(@Param('id') id: string) {
     return this.supperCourtService.findOne(id);

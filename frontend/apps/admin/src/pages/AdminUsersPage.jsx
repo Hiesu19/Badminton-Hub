@@ -31,12 +31,14 @@ import { SidebarPage, showErrorToast, showSuccessToast } from '@booking/shared';
 import { sidebarItemsAdmin } from '@booking/shared/const/sidebarItems.js';
 import {
   fetchAdminUsers,
+  fetchAdminUserDetail,
   deleteAdminUser,
   createOwnerFromUser,
   fetchAdminOwnerDetail,
   updateAdminOwner,
   deleteAdminOwner,
 } from '../services/adminUserService.js';
+import AdminUserDetailDialog from '../components/AdminUserDetailDialog.jsx';
 const ROLE_FILTERS = [
   { label: 'Tất cả', value: '' },
   { label: 'Người chơi', value: 'user' },
@@ -59,6 +61,8 @@ export default function AdminUsersPage() {
     isActive: true,
   });
   const [ownerDialogOpen, setOwnerDialogOpen] = useState(false);
+  const [detailUser, setDetailUser] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [sidebarUser, setSidebarUser] = useState(null);
   const totalPages = Math.max(1, Math.ceil(meta.total / meta.limit));
 
@@ -180,6 +184,18 @@ export default function AdminUsersPage() {
       loadUsers();
     } catch (err) {
       showErrorToast(err?.response?.data?.message || 'Không thể xóa owner.');
+    }
+  };
+
+  const handleOpenUserDetail = async (userId) => {
+    try {
+      const res = await fetchAdminUserDetail(userId);
+      setDetailUser(res.data?.data ?? null);
+      setDetailOpen(true);
+    } catch (err) {
+      showErrorToast(
+        err?.response?.data?.message || 'Không thể lấy thông tin người dùng.',
+      );
     }
   };
 
@@ -340,6 +356,13 @@ export default function AdminUsersPage() {
                             </Button>
                           </>
                         )}
+                        <Button
+                          size="small"
+                          variant="text"
+                          onClick={() => handleOpenUserDetail(row.id)}
+                        >
+                          Chi tiết
+                        </Button>
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -412,6 +435,11 @@ export default function AdminUsersPage() {
             </Button>
           </DialogActions>
         </Dialog>
+        <AdminUserDetailDialog
+          open={detailOpen}
+          user={detailUser}
+          onClose={() => setDetailOpen(false)}
+        />
       </Stack>
     </SidebarPage>
   );

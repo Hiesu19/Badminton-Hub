@@ -4,6 +4,7 @@ import { SupperCourtEntity } from '../../../database/entities/supper-court.entit
 import { SupperCourtPriceEntity } from '../../../database/entities/price-court.entity';
 import { ImageEntity } from '../../../database/entities/court-image.entity';
 import { SubCourtEntity } from '../../../database/entities/sub-court.entity';
+import { BookingEntity } from '../../../database/entities/booking.entity';
 import { SupperCourtController } from './supper-court.controller';
 import { SupperCourtService } from './supper-court.service';
 import { JwtModule } from '@nestjs/jwt';
@@ -15,6 +16,7 @@ import { JwtModule } from '@nestjs/jwt';
       SupperCourtPriceEntity,
       ImageEntity,
       SubCourtEntity,
+      BookingEntity,
     ]),
     JwtModule,
   ],

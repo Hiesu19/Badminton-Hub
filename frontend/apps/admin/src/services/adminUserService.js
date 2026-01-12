@@ -1,6 +1,7 @@
 import api from '@booking/shared/api/axiosInstance.js';
 
 export const fetchAdminUsers = (params) => api.get('/admin/users', { params });
+export const fetchAdminUserDetail = (id) => api.get(`/admin/users/${id}`);
 export const deleteAdminUser = (id) => api.delete(`/admin/users/${id}`);
 export const createOwnerFromUser = (userId) =>
   api.post(`/admin/users/owners/${userId}`);

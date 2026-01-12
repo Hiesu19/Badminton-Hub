@@ -24,7 +24,7 @@ const COLORS = {
   contentBg: '#f9fbf8',
 };
 
-export default function MainLayout({ sidebar, children }) {
+export default function MainLayout({ sidebar, children, appBarTitle = '' }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -150,14 +150,16 @@ export default function MainLayout({ sidebar, children }) {
                 </IconButton>
               )}
 
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 600,
-                }}
-              >
-                Dashboard
-              </Typography>
+              {appBarTitle && (
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                  }}
+                >
+                  {appBarTitle}
+                </Typography>
+              )}
             </Box>
           </Toolbar>
         </AppBar>
