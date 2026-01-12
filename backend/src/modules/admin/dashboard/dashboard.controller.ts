@@ -6,7 +6,7 @@ import { DashboardService } from './dashboard.service';
 import { CourtStatsResponseDto } from './dto/court-stats-response.dto';
 import { UserStatsResponseDto } from './dto/user-stats-response.dto';
 import { RevenueStatsResponseDto } from './dto/revenue-stats-response.dto';
-import { HttpRes } from '@/shared/decorators/http-response.decorator';
+import { RevenueTrendResponseDto } from './dto/revenue-trend-response.dto';
 
 @Controller('/admin/dashboard')
 @ApiTags('Admin - Dashboard')
@@ -40,5 +40,14 @@ export class DashboardController {
   })
   async revenue() {
     return this.dashboardService.getRevenueStats();
+  }
+
+  @Get('revenue-trend')
+  @CustomResponse(RevenueTrendResponseDto, {
+    message: 'Lấy dữ liệu doanh thu theo ngày',
+    description: '[admin] Doanh thu 7 ngày gần nhất để vẽ biểu đồ',
+  })
+  async revenueTrend() {
+    return this.dashboardService.getRevenueTrendLast7Days();
   }
 }

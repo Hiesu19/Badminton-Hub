@@ -35,6 +35,14 @@ export class BookingService {
     return hours * 60 + minutes;
   }
 
+  private toDateTime(date: string, time: string) {
+    let normalizedTime = time;
+    if (/^\d{2}:\d{2}$/.test(time)) {
+      normalizedTime = `${time}:00`;
+    }
+    return new Date(`${date}T${normalizedTime}`);
+  }
+
   private overlaps(startA: number, endA: number, startB: number, endB: number) {
     return startA < endB && startB < endA;
   }
@@ -75,6 +83,15 @@ export class BookingService {
 
     if (subCourts.length !== uniqueSubCourtIds.length) {
       throw new NotFoundException('Một hoặc nhiều court không tồn tại.');
+    }
+
+    const inactiveSubCourts = subCourts.filter((court) => !court.isActive);
+    if (inactiveSubCourts.length > 0) {
+      throw new BadRequestException(
+        `Các court ${inactiveSubCourts
+          .map((court) => court.name || court.id)
+          .join(', ')} hiện không hoạt động.`,
+      );
     }
 
     const supperCourtIdFromDto = dto.supperCourtId
@@ -141,6 +158,10 @@ export class BookingService {
         throw new BadRequestException(
           'startTime phải nhỏ hơn endTime trong mỗi mục',
         );
+      }
+      const startDateTime = this.toDateTime(item.date, item.startTime);
+      if (startDateTime.getTime() < Date.now()) {
+        throw new BadRequestException('Không thể đặt khung giờ đã qua');
       }
       return {
         ...item,

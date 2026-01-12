@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Divider,
   Paper,
   Stack,
@@ -14,6 +15,7 @@ import {
   fetchAdminCourtStats,
   fetchAdminRevenueStats,
   fetchAdminUserStats,
+  fetchAdminRevenueTrend,
 } from '../services/adminDashboardService.js';
 const formatCurrency = (value) =>
   typeof value === 'number'
@@ -77,62 +79,105 @@ const StatsGrid = ({ stats }) => (
   </Stack>
 );
 
-const AlertsPanel = ({ alerts }) => (
-  <Paper elevation={1} sx={{ p: 3, borderRadius: 3 }}>
-    <Stack
-      direction={{ xs: 'column', md: 'row' }}
-      spacing={3}
-      alignItems="center"
-      justifyContent="space-between"
+const RevenueTrendChart = ({ data, loading }) => {
+  const width = 640;
+  const height = 200;
+  const padding = 32;
+  const maxRevenue =
+    data.length > 0 ? Math.max(...data.map((item) => item.revenue ?? 0), 1) : 1;
+
+  const dx =
+    data.length > 1
+      ? (width - padding * 2) / (data.length - 1)
+      : width - padding * 2;
+
+  const points = data.map((item, index) => {
+    const val = item.revenue ?? 0;
+    const x = padding + dx * index;
+    const ratio = Math.min(val / maxRevenue, 1);
+    const y = height - padding - ratio * (height - padding * 2);
+    return { x, y, label: item.date, value: val };
+  });
+
+  const linePath = points
+    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
+    .join(' ');
+  const areaPath =
+    points.length > 0
+      ? `M ${points[0].x} ${height - padding} ${points
+          .map((point) => `L ${point.x} ${point.y}`)
+          .join(' ')} L ${points[points.length - 1].x} ${height - padding} Z`
+      : '';
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 3,
+        border: '1px solid #e5f0e6',
+        p: 2.5,
+        mt: 2,
+      }}
     >
-      <Box>
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          Hoạt động nổi bật
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#475467', mt: 0.5 }}>
-          Những thông tin quan trọng giúp bạn nắm bắt tổng quan hệ thống trong
-          nháy mắt.
-        </Typography>
-      </Box>
-      <Button
-        variant="contained"
-        color="success"
-        sx={{ textTransform: 'none', fontWeight: 600 }}
-      >
-        Tạo báo cáo nhanh
-      </Button>
-    </Stack>
-    <Divider sx={{ my: 2 }} />
-    <Stack spacing={1.5}>
-      {alerts.map((text) => (
+      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+        Doanh thu theo ngày
+      </Typography>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
         <Box
-          key={text}
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            bgcolor: '#f8fafc',
-            px: 2,
-            py: 1.25,
-            borderRadius: 2,
+            overflowX: 'auto',
           }}
         >
-          <Box
-            sx={{
-              width: 8,
-              height: 8,
-              bgcolor: '#16a34a',
-              borderRadius: '50%',
-            }}
-          />
-          <Typography variant="body2" sx={{ color: '#334155' }}>
-            {text}
-          </Typography>
+          <svg width={width} height={height}>
+            <defs>
+              <linearGradient id="trendGrad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="#22c55e" stopOpacity={0.6} />
+                <stop offset="100%" stopColor="#22c55e" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <rect
+              x={padding}
+              y={padding}
+              width={width - padding * 2}
+              height={height - padding * 2}
+              fill="#f9fbff"
+            />
+            <path d={areaPath} fill="url(#trendGrad)" stroke="none" />
+            <path d={linePath} fill="none" stroke="#22c55e" strokeWidth={2} />
+            {points.map((point) => (
+              <g key={point.label}>
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={4}
+                  fill="#fff"
+                  stroke="#256231"
+                  strokeWidth={2}
+                />
+                <text
+                  x={point.x}
+                  y={height - padding + 14}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fill="#475467"
+                >
+                  {new Date(point.label).toLocaleDateString('vi-VN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                  })}
+                </text>
+              </g>
+            ))}
+          </svg>
         </Box>
-      ))}
-    </Stack>
-  </Paper>
-);
+      )}
+    </Paper>
+  );
+};
 
 const RevenuePanel = ({ revenueStats, loading }) => (
   <Paper
@@ -168,7 +213,9 @@ export default function AdminHomePage() {
   const [courtStats, setCourtStats] = useState(null);
   const [userStats, setUserStats] = useState(null);
   const [revenueStats, setRevenueStats] = useState(null);
+  const [revenueTrend, setRevenueTrend] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [trendLoading, setTrendLoading] = useState(true);
   const [sidebarUser, setSidebarUser] = useState(null);
 
   useEffect(() => {
@@ -214,7 +261,20 @@ export default function AdminHomePage() {
     };
 
     loadStats();
+    loadRevenueTrend();
   }, []);
+
+  const loadRevenueTrend = async () => {
+    setTrendLoading(true);
+    try {
+      const res = await fetchAdminRevenueTrend();
+      setRevenueTrend(res.data?.data?.items ?? []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTrendLoading(false);
+    }
+  };
 
   const stats = useMemo(
     () => [
@@ -268,8 +328,8 @@ export default function AdminHomePage() {
         </Box>
 
         <StatsGrid stats={stats} />
-        <AlertsPanel alerts={alerts} />
         <RevenuePanel revenueStats={revenueStats} loading={loading} />
+        <RevenueTrendChart data={revenueTrend} loading={trendLoading} />
       </Stack>
     </SidebarPage>
   );

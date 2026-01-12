@@ -6,6 +6,7 @@ import OwnerCourtsPage from '../pages/OwnerCourtsPage.jsx';
 import OwnerBookingsPage from '../pages/OwnerBookingsPage.jsx';
 import OwnerDashboardPage from '../pages/OwnerDashboardPage.jsx';
 import OwnerLockCourtPage from '../pages/OwnerLockCourtPage.jsx';
+import OwnerGalleryPage from '../pages/OwnerGalleryPage.jsx';
 import { RequireOwnerAuth } from '@booking/shared/middleware/auth-role.js';
 import OwnerProfilePage from '../pages/OwnerProfilePage.jsx';
 
@@ -56,6 +57,14 @@ export default function AppRoutes() {
         element={
           <RequireOwnerAuth>
             <OwnerLockCourtPage />
+          </RequireOwnerAuth>
+        }
+      />
+      <Route
+        path="/gallery"
+        element={
+          <RequireOwnerAuth>
+            <OwnerGalleryPage />
           </RequireOwnerAuth>
         }
       />

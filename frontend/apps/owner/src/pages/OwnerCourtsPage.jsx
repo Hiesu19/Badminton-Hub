@@ -22,6 +22,7 @@ import EditCourtDialog from '../components/EditCourtDialog.jsx';
 import PriceManagement from '../components/PriceManagement.jsx';
 import RegisterCourtSection from '../components/RegisterCourtSection.jsx';
 import toast from 'react-hot-toast';
+import OwnerGalleryUploadDialog from '../components/OwnerGalleryUploadDialog.jsx';
 
 /**
  * Trang quản lý sân cho owner
@@ -32,6 +33,7 @@ export default function OwnerCourtsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [courtNotFound, setCourtNotFound] = useState(false);
+  const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
 
   useEffect(() => {
     syncUserFromStorage();
@@ -122,6 +124,14 @@ export default function OwnerCourtsPage() {
             }}
           >
             Chỉnh sửa thông tin
+          </Button>
+          <Button
+            variant="outlined"
+            sx={{ textTransform: 'none', borderColor: '#22c55e', color: '#166534' }}
+            onClick={() => setGalleryDialogOpen(true)}
+            disabled={!courtData}
+          >
+            Thêm ảnh gallery
           </Button>
         </Box>
 
@@ -314,6 +324,11 @@ export default function OwnerCourtsPage() {
           </Alert>
         )}
       </Box>
+      <OwnerGalleryUploadDialog
+        open={galleryDialogOpen}
+        onClose={() => setGalleryDialogOpen(false)}
+        supperCourtId={courtData?.id ?? null}
+      />
 
       <EditCourtDialog
         open={editDialogOpen}

@@ -32,12 +32,13 @@ import {
 } from '../services/ownerLockService.js';
 
 const TIMES = [];
-for (let h = 0; h <= 23; h += 1) {
+for (let h = 0; h <= 22; h += 1) {
   const hh = String(h).padStart(2, '0');
   TIMES.push(`${hh}:00`);
   TIMES.push(`${hh}:30`);
 }
-TIMES.push('24:00');
+TIMES.push('23:00');
+TIMES.push('23:30');
 
 const SLOT_MINUTES = 30;
 
@@ -52,7 +53,11 @@ const formatMinutesToTime = (minutes) => {
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
 };
 
-const buildBookingItemsFromSelectedSlots = (selectedSlots, priceMatrix, subCourts) => {
+const buildBookingItemsFromSelectedSlots = (
+  selectedSlots,
+  priceMatrix,
+  subCourts,
+) => {
   const groups = {};
 
   selectedSlots.forEach((key) => {
@@ -105,11 +110,7 @@ const buildBookingItemsFromSelectedSlots = (selectedSlots, priceMatrix, subCourt
           dayOfWeek !== null &&
           Array.isArray(priceMatrix[dayOfWeek])
         ) {
-          for (
-            let m = startMinutes;
-            m < endMinutes;
-            m += SLOT_MINUTES
-          ) {
+          for (let m = startMinutes; m < endMinutes; m += SLOT_MINUTES) {
             const slotIndex = m / SLOT_MINUTES;
             const slot = priceMatrix[dayOfWeek][slotIndex];
             if (slot && slot.price != null) {
@@ -138,6 +139,7 @@ const STATUS_STYLE = {
   pending: { bg: '#e5e7eb', hover: '#d1d5db', cursor: 'not-allowed' },
   locked: { bg: '#9ca3af', hover: '#9ca3af', cursor: 'not-allowed' },
   out_of_system: { bg: '#c084fc', hover: '#c084fc', cursor: 'not-allowed' },
+  past: { bg: '#f1f5f9', hover: '#f1f5f9', cursor: 'not-allowed' },
   selecting: { bg: '#22c55e', hover: '#16a34a', cursor: 'pointer' },
 };
 
@@ -198,7 +200,8 @@ export default function OwnerLockCourtPage() {
         fetchCourtPriceMatrix(courtId),
       ]);
 
-      const calendar = calendarRes.data?.data ?? calendarRes.data ?? calendarRes;
+      const calendar =
+        calendarRes.data?.data ?? calendarRes.data ?? calendarRes;
       setBookingMatrix(calendar);
       setSubCourts(
         Array.isArray(calendar?.subCourts)
@@ -210,9 +213,7 @@ export default function OwnerLockCourtPage() {
       );
 
       const price = priceRes.data?.data ?? priceRes.data ?? priceRes;
-      setPriceMatrix(
-        typeof price === 'object' && price !== null ? price : {},
-      );
+      setPriceMatrix(typeof price === 'object' && price !== null ? price : {});
       setSelectedSlots([]);
     } catch (err) {
       toast.error('Không thể tải lịch và giá khoá sân.');
@@ -221,11 +222,18 @@ export default function OwnerLockCourtPage() {
     }
   };
 
+  const isSlotPast = (date, time) => {
+    const slotDate = new Date(`${date}T${time}:00`);
+    return slotDate.getTime() < Date.now();
+  };
+
+  const isEndSlot = (time) => time === '24:00';
+
   const getSlotStatus = (subCourtId, time) => {
     const slotKey = `${selectedDate}|${subCourtId}|${time}`;
-    const baseStatus = bookingMatrix?.subCourts?.find(
-      (s) => Number(s.subCourtId) === Number(subCourtId),
-    )?.map?.find((slot) => slot.startTime?.slice(0, 5) === time)?.status;
+    const baseStatus = bookingMatrix?.subCourts
+      ?.find((s) => Number(s.subCourtId) === Number(subCourtId))
+      ?.map?.find((slot) => slot.startTime?.slice(0, 5) === time)?.status;
 
     const status = String(baseStatus || 'available').toLowerCase();
 
@@ -233,6 +241,8 @@ export default function OwnerLockCourtPage() {
     if (status === 'pending') return 'pending';
     if (status === 'locked') return 'locked';
     if (status === 'out_of_system') return 'out_of_system';
+    if (isSlotPast(selectedDate, time)) return 'past';
+    if (isEndSlot(time)) return 'past';
 
     if (selectedSlots.includes(slotKey)) return 'selecting';
     return 'available';
@@ -242,6 +252,8 @@ export default function OwnerLockCourtPage() {
     const slotKey = `${selectedDate}|${subCourtId}|${time}`;
     const status = getSlotStatus(subCourtId, time);
     if (status !== 'available' && status !== 'selecting') return;
+    if (status === 'past') return;
+    if (isEndSlot(time)) return;
     setSelectedSlots((prev) =>
       prev.includes(slotKey)
         ? prev.filter((s) => s !== slotKey)
@@ -326,7 +338,7 @@ export default function OwnerLockCourtPage() {
       <Box
         sx={{
           width: '100%',
-          maxWidth: 1200,
+          maxWidth: 1500,
           mx: 'auto',
           px: { xs: 2, md: 0 },
           pb: 4,
@@ -403,44 +415,104 @@ export default function OwnerLockCourtPage() {
               p: 2.5,
             }}
           >
-            <Stack
-              direction="row"
-              spacing={2}
-              flexWrap="wrap"
-              sx={{ mb: 2 }}
-            >
+            <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mb: 2 }}>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Box sx={{ width: 16, height: 16, bgcolor: '#ffffff', border: '1px solid rgba(148,163,184,0.8)', borderRadius: 0.5 }} />
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    bgcolor: '#ffffff',
+                    border: '1px solid rgba(148,163,184,0.8)',
+                    borderRadius: 0.5,
+                  }}
+                />
                 <Typography variant="caption">Trống</Typography>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Box sx={{ width: 16, height: 16, bgcolor: '#fecaca', borderRadius: 0.5 }} />
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    bgcolor: '#fecaca',
+                    borderRadius: 0.5,
+                  }}
+                />
                 <Typography variant="caption">Đã đặt</Typography>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Box sx={{ width: 16, height: 16, bgcolor: '#e5e7eb', borderRadius: 0.5 }} />
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    bgcolor: '#e5e7eb',
+                    borderRadius: 0.5,
+                  }}
+                />
                 <Typography variant="caption">Chờ duyệt</Typography>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Box sx={{ width: 16, height: 16, bgcolor: '#9ca3af', borderRadius: 0.5 }} />
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    bgcolor: '#9ca3af',
+                    borderRadius: 0.5,
+                  }}
+                />
                 <Typography variant="caption">Khoá</Typography>
               </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Box sx={{ width: 16, height: 16, bgcolor: '#22c55e', borderRadius: 0.5 }} />
-              <Typography variant="caption">Bạn chọn</Typography>
-            </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Box sx={{ width: 16, height: 16, bgcolor: '#c084fc', borderRadius: 0.5 }} />
-              <Typography variant="caption">Out-of-system</Typography>
-            </Stack>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    bgcolor: '#22c55e',
+                    borderRadius: 0.5,
+                  }}
+                />
+                <Typography variant="caption">Bạn chọn</Typography>
+              </Stack>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    bgcolor: '#c084fc',
+                    borderRadius: 0.5,
+                  }}
+                />
+                <Typography variant="caption">Out-of-system</Typography>
+              </Stack>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    bgcolor: '#f1f5f9',
+                    borderRadius: 0.5,
+                    border: '1px solid #e5e7eb',
+                  }}
+                />
+                <Typography variant="caption">Slot đã qua</Typography>
+              </Stack>
             </Stack>
 
             <Box sx={{ maxHeight: 520, overflowX: 'auto' }}>
-              <TableContainer component={Paper} sx={{ boxShadow: 'none', borderRadius: 0 }}>
+              <TableContainer
+                component={Paper}
+                sx={{ boxShadow: 'none', borderRadius: 0 }}
+              >
                 <Table stickyHeader size="small" sx={{ minWidth: 1400 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ width: 110, bgcolor: '#ecfeff', textAlign: 'center', fontWeight: 600 }}>
+                      <TableCell
+                        sx={{
+                          width: 110,
+                          bgcolor: '#ecfeff',
+                          textAlign: 'center',
+                          fontWeight: 600,
+                        }}
+                      >
                         Sân
                       </TableCell>
                       {TIMES.map((time) => (
@@ -502,9 +574,14 @@ export default function OwnerLockCourtPage() {
                                   p: 0,
                                   height: 32,
                                   bgcolor: style.bg,
-                                  cursor: style.cursor,
+                                  cursor: isEndSlot(time)
+                                    ? 'not-allowed'
+                                    : style.cursor,
                                   '&:hover': {
-                                    bgcolor: status === 'selecting' ? style.hover : style.bg,
+                                    bgcolor:
+                                      status === 'selecting'
+                                        ? style.hover
+                                        : style.bg,
                                   },
                                 }}
                               />
@@ -535,17 +612,30 @@ export default function OwnerLockCourtPage() {
           >
             <Typography variant="body2">
               Đã chọn{' '}
-              <Typography component="span" sx={{ fontWeight: 600, color: '#2563eb' }}>
+              <Typography
+                component="span"
+                sx={{ fontWeight: 600, color: '#2563eb' }}
+              >
                 {selectedSlots.length} slot
               </Typography>
             </Typography>
             <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-              <Chip size="small" color="success" label="Khoá ngoài hệ thống" sx={{ fontSize: 11 }} />
+              <Chip
+                size="small"
+                color="success"
+                label="Khoá ngoài hệ thống"
+                sx={{ fontSize: 11 }}
+              />
             </Stack>
             <Button
               variant="contained"
               fullWidth
-              sx={{ mt: 1, borderRadius: 999, bgcolor: '#386641', '&:hover': { bgcolor: '#2d5234' } }}
+              sx={{
+                mt: 1,
+                borderRadius: 999,
+                bgcolor: '#386641',
+                '&:hover': { bgcolor: '#2d5234' },
+              }}
               onClick={handlePrepareLock}
             >
               Mở dialog khoá sân
@@ -561,7 +651,9 @@ export default function OwnerLockCourtPage() {
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Khoá slot ngoài hệ thống</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Khoá slot ngoài hệ thống
+        </DialogTitle>
         <DialogContent dividers>
           {pendingPayload && (
             <>
@@ -570,13 +662,20 @@ export default function OwnerLockCourtPage() {
                   Ngày: <strong>{pendingPayload.date}</strong>
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#475467' }}>
-                  Tổng tiền: <strong>{pendingPayload.totalPrice?.toLocaleString('vi-VN')} đ</strong>
+                  Tổng tiền:{' '}
+                  <strong>
+                    {pendingPayload.totalPrice?.toLocaleString('vi-VN')} đ
+                  </strong>
                 </Typography>
               </Stack>
 
               <Box sx={{ mt: 2, maxHeight: 180, overflowY: 'auto' }}>
                 {formattedItems.map((item) => (
-                  <Typography key={item.key} variant="body2" sx={{ color: '#4b5563' }}>
+                  <Typography
+                    key={item.key}
+                    variant="body2"
+                    sx={{ color: '#4b5563' }}
+                  >
                     - {item.courtName} ({item.startTime} - {item.endTime}) •{' '}
                     {item.price
                       ? `${item.price.toLocaleString('vi-VN')} đ`
@@ -619,4 +718,3 @@ export default function OwnerLockCourtPage() {
     </SidebarPage>
   );
 }
-

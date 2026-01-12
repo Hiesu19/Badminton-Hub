@@ -9,6 +9,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
+import CourtImageCarousel from './CourtImageCarousel.jsx';
 
 const DAY_LABELS = {
   0: 'Chủ nhật',
@@ -215,6 +216,7 @@ export default function CourtInfoPanel({
       >
         <Tab label="Thông tin" value={0} />
         <Tab label="Bảng giá" value={1} />
+        <Tab label="Ảnh" value={2} />
       </Tabs>
 
       <Box
@@ -302,11 +304,6 @@ export default function CourtInfoPanel({
           mt: 2,
         }}
       >
-        <Typography variant="body2" sx={{ color: '#475467' }}>
-          Ma trận 7 ngày · Mỗi slot 30 phút. Hệ thống gom các dải giờ có giá
-          giống nhau.
-        </Typography>
-
         <Divider sx={{ borderColor: '#e5e7eb' }} />
 
         {priceLoading ? (
@@ -363,6 +360,24 @@ export default function CourtInfoPanel({
               )}
             </Box>
           </>
+        )}
+      </Box>
+
+      <Box
+        hidden={tabIndex !== 2}
+        sx={{
+          display: tabIndex === 2 ? 'flex' : 'none',
+          flexDirection: 'column',
+          gap: 1.5,
+          mt: 2,
+        }}
+      >
+        {court ? (
+          <CourtImageCarousel courtId={court.id} />
+        ) : (
+          <Typography variant="body2" sx={{ color: '#475467' }}>
+            Chọn sân để xem gallery ảnh.
+          </Typography>
         )}
       </Box>
     </Box>

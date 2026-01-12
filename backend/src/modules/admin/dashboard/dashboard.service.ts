@@ -10,6 +10,7 @@ import { UserRole } from 'src/shared/enums/user.enum';
 import { CourtStatsResponseDto } from './dto/court-stats-response.dto';
 import { UserStatsResponseDto } from './dto/user-stats-response.dto';
 import { RevenueStatsResponseDto } from './dto/revenue-stats-response.dto';
+import { RevenueTrendResponseDto } from './dto/revenue-trend-response.dto';
 import { plainToInstance } from 'class-transformer';
 
 @Injectable()
@@ -72,6 +73,58 @@ export class DashboardService {
     );
   }
 
+  async getRevenueTrendLast7Days(): Promise<RevenueTrendResponseDto> {
+    const today = this.getStartOfDay(new Date());
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 6);
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + 1);
+
+    const raw = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .select('DATE(booking.createdAt)', 'date')
+      .addSelect('COALESCE(SUM(booking.totalPrice), 0)', 'total')
+      .where('booking.status = :status', {
+        status: BookingStatus.CONFIRMED,
+      })
+      .andWhere(
+        'booking.createdAt >= :startDate AND booking.createdAt < :endDate',
+        {
+          startDate,
+          endDate,
+        },
+      )
+      .groupBy('DATE(booking.createdAt)')
+      .orderBy('DATE(booking.createdAt)', 'ASC')
+      .getRawMany();
+
+    const revenueMap = new Map<string, number>();
+    for (const record of raw) {
+      const recordDate =
+        record.date instanceof Date
+          ? this.formatDateToYMD(record.date)
+          : record.date;
+      revenueMap.set(recordDate, Number(record.total ?? 0));
+    }
+
+    const items: { date: string; revenue: number }[] = [];
+    const cursor = new Date(startDate);
+    for (let i = 0; i < 7; i += 1) {
+      const dateKey = this.formatDateToYMD(cursor);
+      items.push({
+        date: dateKey as string,
+        revenue: revenueMap.get(dateKey) ?? 0,
+      } as { date: string; revenue: number });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return plainToInstance(
+      RevenueTrendResponseDto,
+      { items },
+      { excludeExtraneousValues: true },
+    );
+  }
+
   private async sumRevenueBetween(start: Date, end: Date): Promise<number> {
     const result = await this.bookingRepository
       .createQueryBuilder('booking')
@@ -126,5 +179,12 @@ export class DashboardService {
     const clone = this.getStartOfDay(date);
     clone.setDate(1);
     return clone;
+  }
+
+  private formatDateToYMD(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

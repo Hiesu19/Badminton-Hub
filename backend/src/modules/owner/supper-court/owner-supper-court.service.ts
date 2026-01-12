@@ -208,69 +208,82 @@ export class OwnerSupperCourtService {
     ownerId: string,
     dayOfWeek: number,
     startTime: string, // VD: "08:00"
-    endTime: string,   // VD: "14:00"
+    endTime: string, // VD: "14:00"
     pricePerHour: number,
   ) {
     // 1. Validation cơ bản
     if (dayOfWeek < 0 || dayOfWeek > 6) {
-      throw new BadRequestException('dayOfWeek phải từ 0 (Chủ nhật) đến 6 (Thứ 7)');
+      throw new BadRequestException(
+        'dayOfWeek phải từ 0 (Chủ nhật) đến 6 (Thứ 7)',
+      );
     }
     if (pricePerHour === undefined || pricePerHour < 0) {
       throw new BadRequestException('pricePerHour phải là số không âm');
     }
-  
+
     // Helper: Chuẩn hóa string thời gian sang định dạng HH:mm:ss để so sánh trong DB
     const normalizeTime = (timeStr: string) => {
-      if (!timeStr) throw new BadRequestException('Thời gian không được để trống');
-      const parts = timeStr.split(':');
-      if (parts.length < 2) throw new BadRequestException('Định dạng thời gian phải là HH:mm');
-      
+      const trimmed = timeStr?.trim();
+      if (!trimmed)
+        throw new BadRequestException('Thời gian không được để trống');
+      const parts = trimmed.split(':');
+      if (parts.length < 2)
+        throw new BadRequestException('Định dạng thời gian phải là HH:mm');
+
       const h = parts[0].padStart(2, '0');
       const m = parts[1].padStart(2, '0');
       const s = (parts[2] || '00').padStart(2, '0');
-      
+
       // Kiểm tra tính hợp lệ của số
       if (isNaN(+h) || isNaN(+m) || isNaN(+s)) {
         throw new BadRequestException('Thời gian chứa ký tự không hợp lệ');
       }
       return `${h}:${m}:${s}`;
     };
-  
+
+    const isMidnightTarget = /^(24:00)(:00)?$/;
+    const trimmedEndTime = endTime.trim();
+    const isEndMidnight = isMidnightTarget.test(trimmedEndTime);
+
     const startFormatted = normalizeTime(startTime);
     const endFormatted = normalizeTime(endTime);
-  
+
     if (startFormatted >= endFormatted) {
       throw new BadRequestException('Giờ kết thúc phải lớn hơn giờ bắt đầu');
     }
-  
+
     // 2. Lấy thông tin sân
     const court = await this.getMyCourtOrThrow(ownerId);
-  
+
     // 3. Lọc trực tiếp trong Database (Tăng hiệu năng & tránh lỗi parse JS)
+    const whereCondition: any = {
+      supperCourt: { id: court.id } as any,
+      dayOfWeek,
+      startTime: MoreThanOrEqual(startFormatted),
+    };
+
+    if (!isEndMidnight) {
+      whereCondition.endTime = LessThanOrEqual(endFormatted);
+    }
+
     const targets = await this.priceRepository.find({
-      where: {
-        supperCourt: { id: court.id } as any,
-        dayOfWeek,
-        // So sánh string trực tiếp với kiểu TIME trong Postgres rất chính xác
-        startTime: MoreThanOrEqual(startFormatted),
-        endTime: LessThanOrEqual(endFormatted),
-      },
+      where: whereCondition,
       order: { startTime: 'ASC' },
     });
-  
+
     if (!targets || targets.length === 0) {
       throw new NotFoundException(
         `Không tìm thấy slot nào trong khoảng ${startTime} - ${endTime} của thứ ${dayOfWeek}`,
       );
     }
-  
+
     // 4. Cập nhật giá
     targets.forEach((p) => {
       p.pricePerHour = pricePerHour;
     });
-  
+
     await this.priceRepository.save(targets);
-  
+
     return {
       message: `Đã cập nhật giá cho ${targets.length} slot thành công`,
       count: targets.length,

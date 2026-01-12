@@ -350,23 +350,27 @@ export default function PriceManagement() {
               >
                 <TextField
                   label="Giờ bắt đầu"
-                  type="time"
+                  type="text"
+                  placeholder="HH:mm hoặc HH:mm:ss"
                   value={bulkForm.startTime}
                   onChange={(e) =>
                     setBulkForm({ ...bulkForm, startTime: e.target.value })
                   }
                   InputLabelProps={{ shrink: true }}
                   required
+                  helperText="Nhập giờ tự do, ví dụ 08:30 hoặc 08:30:00"
                 />
                 <TextField
                   label="Giờ kết thúc"
-                  type="time"
+                  type="text"
+                  placeholder="HH:mm hoặc HH:mm:ss"
                   value={bulkForm.endTime}
                   onChange={(e) =>
                     setBulkForm({ ...bulkForm, endTime: e.target.value })
                   }
                   InputLabelProps={{ shrink: true }}
                   required
+                  helperText="Nhập giờ tự do, ví dụ 12:00 hoặc 12:00:00"
                 />
               </Box>
 

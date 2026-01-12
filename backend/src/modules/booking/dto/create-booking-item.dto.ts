@@ -7,6 +7,7 @@ import {
   IsNumber,
   IsPositive,
   IsString,
+  Matches,
 } from 'class-validator';
 
 export class CreateBookingItemDto {
@@ -33,7 +34,7 @@ export class CreateBookingItemDto {
     description: 'Giờ kết thúc theo chuẩn 24h (HH:mm)',
     example: '17:30',
   })
-  @IsMilitaryTime()
+  @Matches(/^(?:[01]\d|2[0-3]):[0-5]\d|24:00$/)
   endTime: string;
 
   @ApiProperty({
