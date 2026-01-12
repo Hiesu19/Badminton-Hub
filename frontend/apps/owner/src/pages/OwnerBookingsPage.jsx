@@ -24,9 +24,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import { SidebarPage } from '@booking/shared';
-import HomeIcon from '@mui/icons-material/Home';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import BusinessIcon from '@mui/icons-material/Business';
+import { sidebarItemsOwner } from '@booking/shared/const/sidebarItems.js';
 import {
   fetchOwnerBookings,
   fetchOwnerBookingDetail,
@@ -54,9 +52,6 @@ const formatMinutesToTime = (minutes) => {
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
 };
 
-/**
- * Trang quản lý đặt sân cho owner
- */
 export default function OwnerBookingsPage() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().slice(0, 10),
@@ -160,12 +155,9 @@ export default function OwnerBookingsPage() {
     }
 
     try {
-      // Mở dialog ngay lập tức để cải thiện UX
       setDetailDialogOpen(true);
       setDetailLoading(true);
-      setSelectedBooking(null); // Reset để hiển thị loading
-
-      // Load chi tiết booking
+      setSelectedBooking(null);
       const detail = await fetchOwnerBookingDetail(booking.id);
       setSelectedBooking(detail);
     } catch (err) {
@@ -250,11 +242,7 @@ export default function OwnerBookingsPage() {
     );
   };
 
-  const sidebarItems = [
-    { text: 'Trang chủ', icon: HomeIcon, path: '/' },
-    { text: 'Quản lý sân', icon: BusinessIcon, path: '/courts' },
-    { text: 'Quản lý đặt sân', icon: DashboardIcon, path: '/bookings' },
-  ];
+  const sidebarItems = sidebarItemsOwner;
 
   const sidebarUser = currentUser
     ? {
