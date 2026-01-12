@@ -11,19 +11,6 @@ export { default as LoginPage } from './pages/LoginPage.jsx';
 export { default as RegisterPage } from './pages/RegisterPage.jsx';
 export { default as ForgotPasswordPage } from './pages/ForgotPasswordPage.jsx';
 export {
-  fetchAdminCourtStats,
-  fetchAdminUserStats,
-  fetchAdminRevenueStats,
-} from './services/adminDashboardService.js';
-export {
-  fetchAdminUsers,
-  deleteAdminUser,
-  createOwnerFromUser,
-  fetchAdminOwnerDetail,
-  updateAdminOwner,
-  deleteAdminOwner,
-} from './services/adminUserService.js';
-export {
   showSuccessToast,
   showErrorToast,
   showInfoToast,

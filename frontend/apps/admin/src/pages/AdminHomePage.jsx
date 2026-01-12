@@ -14,7 +14,7 @@ import {
   fetchAdminCourtStats,
   fetchAdminRevenueStats,
   fetchAdminUserStats,
-} from '@booking/shared/services/adminDashboardService.js';
+} from '../services/adminDashboardService.js';
 
 const formatCurrency = (value) =>
   typeof value === 'number'
@@ -256,11 +256,7 @@ export default function AdminHomePage() {
   );
 
   return (
-    <SidebarPage
-      items={sidebarItemsAdmin}
-      user={sidebarUser}
-      canOpenProfile={false}
-    >
+    <SidebarPage items={sidebarItemsAdmin} user={sidebarUser} canOpenProfile>
       <Stack spacing={3}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>

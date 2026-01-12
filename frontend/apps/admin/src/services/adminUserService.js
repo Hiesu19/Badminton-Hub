@@ -1,4 +1,4 @@
-import api from '../api/axiosInstance.js';
+import api from '@booking/shared/api/axiosInstance.js';
 
 export const fetchAdminUsers = (params) => api.get('/admin/users', { params });
 export const deleteAdminUser = (id) => api.delete(`/admin/users/${id}`);

@@ -94,6 +94,7 @@ export class SupperCourtService {
       const items = await this.supperCourtRepository.find({
         where,
         order: { id: 'DESC' },
+        relations: ['user'],
       });
 
       return {
@@ -111,6 +112,7 @@ export class SupperCourtService {
       skip: (page - 1) * limit,
       take: limit,
       order: { id: 'DESC' },
+      relations: ['user'],
     });
 
     return {

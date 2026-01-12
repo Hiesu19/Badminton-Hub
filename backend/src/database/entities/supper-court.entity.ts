@@ -1,10 +1,12 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { ImageEntity } from './court-image.entity';
 import { ImageDefaultEnum } from '../../shared/enums/image.enum';
@@ -67,6 +69,21 @@ export class SupperCourtEntity {
     default: ImageDefaultEnum.DEFAULT_SUPPER_COURT,
   })
   imageUrl: string | null;
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    precision: 6,
+    default: () => 'CURRENT_TIMESTAMP(6)',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    precision: 6,
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
+  })
+  updatedAt: Date;
 
   // -----------------------------
   @OneToMany(() => ImageEntity, (image) => image.supperCourt)

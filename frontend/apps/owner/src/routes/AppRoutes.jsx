@@ -1,10 +1,11 @@
 import { Routes, Route } from 'react-router-dom';
-import { ProfilePage, LoginPage, ForgotPasswordPage } from '@booking/shared';
+import { LoginPage, ForgotPasswordPage } from '@booking/shared';
 import OwnerAuthLanding from '../pages/OwnerAuthLanding.jsx';
 import SubCourtsPage from '../pages/SubCourtsPage.jsx';
 import OwnerCourtsPage from '../pages/OwnerCourtsPage.jsx';
 import OwnerBookingsPage from '../pages/OwnerBookingsPage.jsx';
 import { RequireOwnerAuth } from '@booking/shared/middleware/auth-role.js';
+import OwnerProfilePage from '../pages/OwnerProfilePage.jsx';
 
 export default function AppRoutes() {
   return (
@@ -47,7 +48,7 @@ export default function AppRoutes() {
         path="/profile"
         element={
           <RequireOwnerAuth>
-            <ProfilePage />
+            <OwnerProfilePage />
           </RequireOwnerAuth>
         }
       />

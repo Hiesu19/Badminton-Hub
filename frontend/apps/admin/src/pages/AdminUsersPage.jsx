@@ -36,7 +36,7 @@ import {
   fetchAdminOwnerDetail,
   updateAdminOwner,
   deleteAdminOwner,
-} from '@booking/shared/services/adminUserService.js';
+} from '../services/adminUserService.js';
 
 const ROLE_FILTERS = [
   { label: 'Tất cả', value: '' },
@@ -202,11 +202,7 @@ export default function AdminUsersPage() {
   );
 
   return (
-    <SidebarPage
-      items={sidebarItemsAdmin}
-      user={sidebarUser}
-      canOpenProfile={false}
-    >
+    <SidebarPage items={sidebarItemsAdmin} user={sidebarUser} canOpenProfile>
       <Stack spacing={3}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 700 }}>
