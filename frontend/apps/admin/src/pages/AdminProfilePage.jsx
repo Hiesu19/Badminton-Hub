@@ -2,9 +2,6 @@ import { useEffect, useState } from 'react';
 import { SidebarPage } from '@booking/shared';
 import { sidebarItemsAdmin } from '@booking/shared/const/sidebarItems.js';
 import ProfilePage from '@booking/shared/pages/ProfilePage.jsx';
-import { logout } from '@booking/shared/services/authService.js';
-import { useNavigate } from 'react-router-dom';
-
 export default function AdminProfilePage() {
   const [sidebarUser, setSidebarUser] = useState(null);
   const navigate = useNavigate();
@@ -25,14 +22,6 @@ export default function AdminProfilePage() {
       setSidebarUser(null);
     }
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } finally {
-      navigate('/login');
-    }
-  };
 
   return (
     <SidebarPage items={sidebarItemsAdmin} user={sidebarUser} canOpenProfile>

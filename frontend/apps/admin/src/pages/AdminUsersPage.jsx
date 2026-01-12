@@ -37,9 +37,6 @@ import {
   updateAdminOwner,
   deleteAdminOwner,
 } from '../services/adminUserService.js';
-import { logout } from '@booking/shared/services/authService.js';
-import { useNavigate } from 'react-router-dom';
-
 const ROLE_FILTERS = [
   { label: 'Tất cả', value: '' },
   { label: 'Người chơi', value: 'user' },
@@ -63,7 +60,6 @@ export default function AdminUsersPage() {
   });
   const [ownerDialogOpen, setOwnerDialogOpen] = useState(false);
   const [sidebarUser, setSidebarUser] = useState(null);
-  const navigate = useNavigate();
   const totalPages = Math.max(1, Math.ceil(meta.total / meta.limit));
 
   useEffect(() => {
@@ -203,14 +199,6 @@ export default function AdminUsersPage() {
       })),
     [users],
   );
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } finally {
-      navigate('/login');
-    }
-  };
 
   return (
     <SidebarPage items={sidebarItemsAdmin} user={sidebarUser} canOpenProfile>

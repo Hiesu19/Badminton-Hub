@@ -7,11 +7,6 @@ import { MainLayout, Sidebar } from '@booking/shared';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
 
-/**
- * Trang landing/auth cho client:
- * - Bên trái: giới thiệu ngắn về hệ thống
- * - Bên phải: form đăng nhập/đăng ký hoặc chào mừng + nút đăng xuất nếu đã đăng nhập
- */
 export default function ClientAuthLanding() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);

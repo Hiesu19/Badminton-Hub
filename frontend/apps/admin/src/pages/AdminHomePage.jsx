@@ -15,9 +15,6 @@ import {
   fetchAdminRevenueStats,
   fetchAdminUserStats,
 } from '../services/adminDashboardService.js';
-import { logout } from '@booking/shared/services/authService.js';
-import { useNavigate } from 'react-router-dom';
-
 const formatCurrency = (value) =>
   typeof value === 'number'
     ? new Intl.NumberFormat('vi-VN', {
@@ -173,7 +170,6 @@ export default function AdminHomePage() {
   const [revenueStats, setRevenueStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarUser, setSidebarUser] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -257,14 +253,6 @@ export default function AdminHomePage() {
     ],
     [courtStats, userStats, revenueStats],
   );
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } finally {
-      navigate('/login');
-    }
-  };
 
   return (
     <SidebarPage items={sidebarItemsAdmin} user={sidebarUser} canOpenProfile>
