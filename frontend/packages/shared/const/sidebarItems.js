@@ -19,5 +19,6 @@ export const sidebarItemsOwner = [
 
 export const sidebarItemsAdmin = [
   { text: 'Trang chủ', icon: HomeIcon, path: '/' },
+  { text: 'Quản lý người dùng', icon: DashboardIcon, path: '/users' },
   { text: 'Quản lý hệ thống', icon: DashboardIcon, path: '/admin' },
 ];

@@ -56,14 +56,10 @@ export class AdminUserService {
    * Sinh mật khẩu ngẫu nhiên cho owner
    */
   private generateRandomPassword(length = 10): string {
-    const chars1 =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const chars2 =
-      'abcdefghijklmnopqrstuvwxyz';
-    const chars3 =
-      '0123456789';
-    const chars4 =
-      '@#';
+    const chars1 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const chars2 = 'abcdefghijklmnopqrstuvwxyz';
+    const chars3 = '0123456789';
+    const chars4 = '@#';
     let password = '';
     for (let i = 0; i < 2; i++) {
       const idx = Math.floor(Math.random() * chars1.length);
@@ -73,7 +69,7 @@ export class AdminUserService {
       const idx = Math.floor(Math.random() * chars2.length);
       password += chars2[idx];
     }
-    for (let i = 0; i < length-6; i++) {
+    for (let i = 0; i < length - 6; i++) {
       const idx = Math.floor(Math.random() * chars3.length);
       password += chars3[idx];
     }
@@ -198,5 +194,22 @@ export class AdminUserService {
 
     await this.userRepository.remove(owner);
     return 'Xóa owner thành công';
+  }
+
+  async deleteUser(id: string) {
+    const numericId = Number(id);
+    if (Number.isNaN(numericId)) {
+      throw new BadRequestException('Id không hợp lệ');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: numericId, role: UserRole.USER },
+    });
+    if (!user) {
+      throw new NotFoundException('User không tồn tại');
+    }
+
+    await this.userRepository.remove(user);
+    return 'Xóa user thành công';
   }
 }

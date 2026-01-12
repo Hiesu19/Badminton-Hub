@@ -9,7 +9,7 @@ export class AdminUserResponseDto {
 
   @Expose()
   @ApiProperty({ example: 'Nguyen Van A' })
-  fullName: string;
+  name: string;
 
   @Expose()
   @ApiProperty({ example: 'user@example.com' })

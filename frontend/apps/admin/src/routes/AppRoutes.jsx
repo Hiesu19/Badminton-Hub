@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage, ForgotPasswordPage } from '@booking/shared';
 import AdminHomePage from '../pages/AdminHomePage.jsx';
+import AdminUsersPage from '../pages/AdminUsersPage.jsx';
 import { RequireAdminAuth } from '@booking/shared/middleware/auth-role.js';
 
 export default function AppRoutes() {
@@ -13,6 +14,14 @@ export default function AppRoutes() {
         element={
           <RequireAdminAuth>
             <AdminHomePage />
+          </RequireAdminAuth>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <RequireAdminAuth>
+            <AdminUsersPage />
           </RequireAdminAuth>
         }
       />

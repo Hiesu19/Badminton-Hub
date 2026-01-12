@@ -34,6 +34,16 @@ export class AdminUserController {
     return this.adminUserService.listUsers(query);
   }
 
+  @Delete(':id')
+  @CustomResponse('string', {
+    code: 200,
+    message: 'Xóa user thành công',
+    description: '[admin] Xóa tài khoản role USER theo id',
+  })
+  async deleteUser(@Param('id') id: string) {
+    return this.adminUserService.deleteUser(id);
+  }
+
   // ---------- OWNER (role OWNER) ----------
 
   @Post('owners/:userId')
