@@ -10,6 +10,16 @@ export async function getMyCourt() {
 }
 
 /**
+ * Tạo cụm sân mới cho owner
+ * @param {object} courtData
+ */
+export async function createCourt(courtData) {
+  const { data } = await api.post('/supper-courts', courtData);
+  const payload = data?.data ?? data;
+  return payload;
+}
+
+/**
  * Cập nhật thông tin cụm sân (không được phép đổi địa chỉ)
  * @param {object} courtData - Dữ liệu cụm sân cần cập nhật
  */

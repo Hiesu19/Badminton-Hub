@@ -20,6 +20,7 @@ import LanguageIcon from '@mui/icons-material/Language';
 import { getMyCourt } from '../services/ownerCourtService.js';
 import EditCourtDialog from '../components/EditCourtDialog.jsx';
 import PriceManagement from '../components/PriceManagement.jsx';
+import RegisterCourtSection from '../components/RegisterCourtSection.jsx';
 import toast from 'react-hot-toast';
 
 /**
@@ -30,6 +31,7 @@ export default function OwnerCourtsPage() {
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [courtNotFound, setCourtNotFound] = useState(false);
 
   useEffect(() => {
     syncUserFromStorage();
@@ -53,11 +55,18 @@ export default function OwnerCourtsPage() {
       setLoading(true);
       const data = await getMyCourt();
       setCourtData(data);
+      setCourtNotFound(false);
     } catch (err) {
-      const message =
-        err?.response?.data?.message ||
-        'Không thể tải thông tin cụm sân. Vui lòng thử lại.';
-      toast.error(Array.isArray(message) ? message.join(', ') : message);
+      if (err?.response?.status === 404) {
+        setCourtData(null);
+        setCourtNotFound(true);
+      } else {
+        const message =
+          err?.response?.data?.message ||
+          'Không thể tải thông tin cụm sân. Vui lòng thử lại.';
+        toast.error(Array.isArray(message) ? message.join(', ') : message);
+        setCourtNotFound(false);
+      }
     } finally {
       setLoading(false);
     }
@@ -294,6 +303,11 @@ export default function OwnerCourtsPage() {
 
             <PriceManagement />
           </Stack>
+        ) : courtNotFound ? (
+          <RegisterCourtSection
+            onSuccess={loadCourtData}
+            currentUser={currentUser}
+          />
         ) : (
           <Alert severity="warning">
             Không tìm thấy thông tin cụm sân. Vui lòng liên hệ quản trị viên.

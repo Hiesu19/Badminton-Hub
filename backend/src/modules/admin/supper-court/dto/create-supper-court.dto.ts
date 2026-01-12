@@ -71,9 +71,7 @@ export class CreateSupperCourtDto {
   email?: string;
 
   @ApiPropertyOptional({ example: 'https://sancau.com' })
-  @IsString()
   @IsOptional()
-  @IsUrl({}, { message: 'Website phải là một URL hợp lệ' })
   website?: string;
 
   @ApiProperty({ example: 'Vietcombank' })
@@ -96,4 +94,13 @@ export class CreateSupperCourtDto {
   @IsString()
   @Length(0, 500, { message: 'URL ảnh tối đa 500 ký tự' })
   imageUrl?: string;
+
+  @ApiPropertyOptional({
+    example:
+      'https://badminton-hub.s3.ap-southeast-1.amazonaws.com/supper-court.jpg',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(0, 500, { message: 'URL ảnh tối đa 500 ký tự' })
+  qrCodeUrl?: string;
 }

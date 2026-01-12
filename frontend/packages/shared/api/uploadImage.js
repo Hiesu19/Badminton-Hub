@@ -62,6 +62,11 @@ const getS3PresignedUrl = async ({
       presignedEndpoint = '/uploads/presigned-booking-bill-image';
       body = { bookingId, contentType };
       break;
+    case 'supperCourtQr':
+      if (!supperCourtId) throw new Error('Thiếu supperCourtId cho QR sân');
+      presignedEndpoint = '/uploads/presigned-supper-court-qr-code';
+      body = { supperCourtId, contentType };
+      break;
     default:
       throw new Error('Loại upload không hợp lệ');
   }
