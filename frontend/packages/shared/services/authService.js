@@ -119,20 +119,24 @@ export async function verifyForgotPassword({
   };
 }
 
-export async function changePassword({
-  userId,
-  oldPassword,
-  newPassword,
-}) {
-  const { data } = await api.post('/auth/change-password', { userId, oldPassword, newPassword });
+export async function changePassword({ userId, oldPassword, newPassword }) {
+  const { data } = await api.post('/auth/change-password', {
+    userId,
+    oldPassword,
+    newPassword,
+  });
   const payload = data?.message || data?.data || data;
   return {
-    message: typeof payload === 'string' ? payload : 'Mật khẩu đã được thay đổi thành công',
+    message:
+      typeof payload === 'string'
+        ? payload
+        : 'Mật khẩu đã được thay đổi thành công',
     raw: data,
   };
 }
 
-export async function logout({ userId }) {
+export async function logout() {
+  await api.post('/auth/logout');
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');

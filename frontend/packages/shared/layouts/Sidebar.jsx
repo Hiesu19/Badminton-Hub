@@ -12,18 +12,26 @@ import {
 } from '@mui/material';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import MainLayout from './MainLayout.jsx';
+import { logout } from '../services/authService.js';
 
 export default function Sidebar({
   user,
   items,
   profilePath = '/profile',
   canOpenProfile = true,
-  onLogout,
 }) {
   const location = useLocation();
   const navigate = useNavigate();
-
   const initial = user?.name?.trim()?.[0]?.toUpperCase() || '?';
+  const signedIn = Boolean(user && Object.keys(user).length > 0);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate('/login', { replace: true });
+    }
+  };
 
   return (
     <Box
@@ -131,12 +139,12 @@ export default function Sidebar({
         </List>
       </Box>
 
-      {onLogout && (
-        <Box sx={{ mt: 2 }}>
+      {signedIn && (
+        <Box>
           <Divider sx={{ mb: 1.5 }} />
           <Button
             variant="text"
-            onClick={onLogout}
+            onClick={handleLogout}
             fullWidth
             sx={{
               justifyContent: 'flex-start',
@@ -145,9 +153,7 @@ export default function Sidebar({
               fontWeight: 600,
               borderRadius: 999,
               px: 1.5,
-              '&:hover': {
-                bgcolor: '#fee2e2',
-              },
+              '&:hover': { bgcolor: '#fee2e2' },
             }}
           >
             Đăng xuất
@@ -163,7 +169,6 @@ export function SidebarPage({
   items,
   profilePath,
   canOpenProfile,
-  onLogout,
   children,
 }) {
   return (
@@ -174,7 +179,6 @@ export function SidebarPage({
           items={items}
           profilePath={profilePath}
           canOpenProfile={canOpenProfile}
-          onLogout={onLogout}
         />
       }
     >

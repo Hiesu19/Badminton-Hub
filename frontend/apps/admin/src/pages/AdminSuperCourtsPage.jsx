@@ -35,6 +35,8 @@ import {
   updateAdminSuperCourt,
   deleteAdminSuperCourt,
 } from '../services/adminSuperCourtService.js';
+import { logout } from '@booking/shared/services/authService.js';
+import { useNavigate } from 'react-router-dom';
 
 const STATUS_OPTIONS = [
   { label: 'Tất cả', value: '' },
@@ -60,6 +62,7 @@ export default function AdminSuperCourtsPage() {
     address: '',
   });
   const [sidebarUser, setSidebarUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -175,6 +178,14 @@ export default function AdminSuperCourtsPage() {
   );
 
   const totalPages = Math.max(1, Math.ceil(meta.total / meta.limit));
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate('/login');
+    }
+  };
 
   return (
     <SidebarPage items={sidebarItemsAdmin} user={sidebarUser} canOpenProfile>

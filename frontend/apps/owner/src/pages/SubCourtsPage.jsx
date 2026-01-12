@@ -268,13 +268,20 @@ export default function SubCourtsPage() {
       </Box>
 
       {/* Dialog thêm / sửa sân con */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <form onSubmit={handleSubmit}>
           <DialogTitle sx={{ fontWeight: 700, color: '#1f3f2b' }}>
             {editing ? 'Chỉnh sửa sân con' : 'Thêm sân con'}
           </DialogTitle>
           <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <Box
+              sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}
+            >
               <TextField
                 label="Tên sân con"
                 value={form.name}
@@ -350,11 +357,15 @@ export default function SubCourtsPage() {
         <DialogContent>
           <Typography>
             Bạn có chắc muốn xóa sân con{' '}
-            <strong>{editing?.name || 'này'}</strong>? Hành động không thể hoàn tác.
+            <strong>{editing?.name || 'này'}</strong>? Hành động không thể hoàn
+            tác.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={deleting}
+          >
             Hủy
           </Button>
           <Button
@@ -370,4 +381,3 @@ export default function SubCourtsPage() {
     </SidebarPage>
   );
 }
-
