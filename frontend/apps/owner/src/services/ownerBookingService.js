@@ -25,6 +25,28 @@ export async function fetchOwnerBookingDetail(bookingId) {
   return payload;
 }
 
+export async function fetchOwnerAllBookings({
+  status,
+  startDate,
+  endDate,
+  page = 1,
+  limit = 10,
+} = {}) {
+  const params = {};
+  if (status) params.status = status;
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  if (page) params.page = page;
+  if (limit) params.limit = limit;
+  const { data } = await api.get('/bookings/owner-all', { params });
+  const payload = data?.data ?? [];
+  const metadata = data?.metadata ?? data?.meta ?? {};
+  return {
+    items: Array.isArray(payload) ? payload : [],
+    metadata,
+  };
+}
+
 /**
  * Cập nhật trạng thái booking
  * @param {string|number} bookingId - ID của booking

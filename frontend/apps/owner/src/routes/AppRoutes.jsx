@@ -4,6 +4,8 @@ import OwnerAuthLanding from '../pages/OwnerAuthLanding.jsx';
 import SubCourtsPage from '../pages/SubCourtsPage.jsx';
 import OwnerCourtsPage from '../pages/OwnerCourtsPage.jsx';
 import OwnerBookingsPage from '../pages/OwnerBookingsPage.jsx';
+import OwnerDashboardPage from '../pages/OwnerDashboardPage.jsx';
+import OwnerLockCourtPage from '../pages/OwnerLockCourtPage.jsx';
 import { RequireOwnerAuth } from '@booking/shared/middleware/auth-role.js';
 import OwnerProfilePage from '../pages/OwnerProfilePage.jsx';
 
@@ -12,6 +14,15 @@ export default function AppRoutes() {
     <Routes>
       {/* Landing + Auth cho owner */}
       <Route path="/" element={<OwnerAuthLanding />} />
+      {/* Dashboard owner */}
+      <Route
+        path="/dashboard"
+        element={
+          <RequireOwnerAuth>
+            <OwnerDashboardPage />
+          </RequireOwnerAuth>
+        }
+      />
       {/* Trang quản lý sân */}
       <Route
         path="/courts"
@@ -36,6 +47,15 @@ export default function AppRoutes() {
         element={
           <RequireOwnerAuth>
             <OwnerBookingsPage />
+          </RequireOwnerAuth>
+        }
+      />
+      {/* Trang khoá sân ngoài hệ thống */}
+      <Route
+        path="/lock-court"
+        element={
+          <RequireOwnerAuth>
+            <OwnerLockCourtPage />
           </RequireOwnerAuth>
         }
       />

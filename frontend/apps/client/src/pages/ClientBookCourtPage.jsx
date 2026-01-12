@@ -163,6 +163,7 @@ const ClientBookCourtPage = () => {
         if (status === 'pending') return 'pending';
         if (status === 'confirmed') return 'booked';
         if (status === 'locked') return 'locked';
+        if (status === 'out_of_system') return 'out_of_system';
         return 'available';
     };
 
@@ -306,19 +307,20 @@ const ClientBookCourtPage = () => {
         let cursor = 'pointer';
 
         if (status === 'booked') {
-            // Đã đặt (đỏ)
             bgColor = '#fecaca';
             hoverBg = '#fca5a5';
             cursor = 'not-allowed';
         } else if (status === 'pending') {
-            // Chờ xác nhận (xám)
             bgColor = '#e5e7eb';
             hoverBg = '#d1d5db';
             cursor = 'not-allowed';
         } else if (status === 'locked') {
-            // Khoá hoàn toàn
             bgColor = '#9ca3af';
             hoverBg = '#9ca3af';
+            cursor = 'not-allowed';
+        } else if (status === 'out_of_system') {
+            bgColor = '#c084fc';
+            hoverBg = '#c084fc';
             cursor = 'not-allowed';
         } else if (status === 'selecting') {
             bgColor = '#22c55e';
@@ -413,6 +415,18 @@ const ClientBookCourtPage = () => {
                             />
                             <Typography variant="caption">Khoá</Typography>
                         </Stack>
+
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Box
+                            sx={{
+                                width: 16,
+                                height: 16,
+                                bgcolor: '#c084fc',
+                                borderRadius: 0.5,
+                            }}
+                        />
+                        <Typography variant="caption">Out-of-system</Typography>
+                    </Stack>
 
                         <Stack direction="row" spacing={1} alignItems="center">
                             <Box

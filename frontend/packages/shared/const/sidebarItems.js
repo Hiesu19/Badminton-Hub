@@ -11,10 +11,11 @@ export const sidebarItemsClient = [
 ];
 
 export const sidebarItemsOwner = [
-  { text: 'Trang chủ', icon: HomeIcon, path: '/' },
+  { text: 'Tổng quan', icon: DashboardIcon, path: '/dashboard' },
   { text: 'Quản lý sân', icon: BusinessIcon, path: '/courts' },
   { text: 'Quản lý các sân con', icon: DashboardIcon, path: '/sub-courts' },
   { text: 'Quản lý đặt sân', icon: DashboardIcon, path: '/bookings' },
+  { text: 'Khoá sân', icon: BusinessIcon, path: '/lock-court' },
 ];
 
 export const sidebarItemsAdmin = [

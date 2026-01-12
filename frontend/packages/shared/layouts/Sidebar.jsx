@@ -170,6 +170,7 @@ export function SidebarPage({
   profilePath,
   canOpenProfile,
   children,
+  appBarTitle = '',
 }) {
   return (
     <MainLayout
@@ -181,6 +182,7 @@ export function SidebarPage({
           canOpenProfile={canOpenProfile}
         />
       }
+      appBarTitle={appBarTitle}
     >
       {children}
     </MainLayout>

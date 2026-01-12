@@ -32,6 +32,7 @@ import {
 } from '../services/ownerBookingService.js';
 import { fetchSubCourts } from '../services/subCourtsService.js';
 import toast from 'react-hot-toast';
+import OwnerAllBookingsDialog from '../components/OwnerAllBookingsDialog.jsx';
 
 const TIMES = [];
 for (let h = 0; h <= 23; h += 1) {
@@ -64,6 +65,7 @@ export default function OwnerBookingsPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [allDialogOpen, setAllDialogOpen] = useState(false);
 
   useEffect(() => {
     syncUserFromStorage();
@@ -124,6 +126,7 @@ export default function OwnerBookingsPage() {
     if (status === 'confirmed') return 'booked';
     if (status === 'pending') return 'pending';
     if (status === 'cancelled') return 'cancelled';
+    if (status === 'out_of_system') return 'out_of_system';
     return 'pending';
   };
 
@@ -211,6 +214,10 @@ export default function OwnerBookingsPage() {
       bgColor = '#f3f4f6';
       hoverBg = '#e5e7eb';
       cursor = 'pointer';
+    } else if (status === 'out_of_system') {
+      bgColor = '#c084fc';
+      hoverBg = '#c084fc';
+      cursor = 'pointer';
     } else {
       // Slot trống vẫn có thể click để xem thông tin
       cursor = 'pointer';
@@ -271,12 +278,21 @@ export default function OwnerBookingsPage() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            gap: 2,
+            flexWrap: 'wrap',
             mb: 3,
           }}
         >
           <Typography variant="h5" sx={{ fontWeight: 700, color: '#1f3f2b' }}>
             Quản lý đặt sân
           </Typography>
+          <Button
+            variant="outlined"
+            onClick={() => setAllDialogOpen(true)}
+            sx={{ textTransform: 'none' }}
+          >
+            Xem toàn bộ booking
+          </Button>
         </Box>
 
         <Box
@@ -336,6 +352,18 @@ export default function OwnerBookingsPage() {
                 }}
               />
               <Typography variant="caption">Chờ xác nhận</Typography>
+            </Stack>
+
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box
+                sx={{
+                  width: 16,
+                  height: 16,
+                  bgcolor: '#c084fc',
+                  borderRadius: 0.5,
+                }}
+              />
+              <Typography variant="caption">Out-of-system</Typography>
             </Stack>
 
             <Box sx={{ flexGrow: 1 }} />
@@ -673,6 +701,7 @@ export default function OwnerBookingsPage() {
                   >
                     <MenuItem value="pending">Chờ xác nhận</MenuItem>
                     <MenuItem value="confirmed">Đã xác nhận</MenuItem>
+                    <MenuItem value="rejected">Từ chối</MenuItem>
                     <MenuItem value="cancelled">Đã hủy</MenuItem>
                   </Select>
                 </FormControl>
@@ -686,6 +715,10 @@ export default function OwnerBookingsPage() {
           <Button onClick={() => setDetailDialogOpen(false)}>Đóng</Button>
         </DialogActions>
       </Dialog>
+      <OwnerAllBookingsDialog
+        open={allDialogOpen}
+        onClose={() => setAllDialogOpen(false)}
+      />
     </SidebarPage>
   );
 }

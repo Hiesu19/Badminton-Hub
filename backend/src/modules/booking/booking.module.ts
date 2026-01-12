@@ -20,6 +20,7 @@ import { JwtModule } from '@nestjs/jwt';
   ],
   controllers: [BookingController],
   providers: [BookingService],
+  exports: [BookingService],
 })
 export class BookingModule {}
 

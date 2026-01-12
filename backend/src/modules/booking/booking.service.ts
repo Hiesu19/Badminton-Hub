@@ -14,6 +14,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { UploadBookingBillDto } from './dto/upload-booking-bill.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { ListBookingResponseDto } from './dto/list-booking-query.dto';
+import { ListOwnerBookingQueryDto } from './dto/list-owner-booking-query.dto';
 import { plainToInstance } from 'class-transformer';
 
 @Injectable()
@@ -38,7 +39,11 @@ export class BookingService {
     return startA < endB && startB < endA;
   }
 
-  async createBooking(userId: string, dto: CreateBookingDto) {
+  async createBooking(
+    userId: string,
+    dto: CreateBookingDto,
+    status: BookingStatus = BookingStatus.PENDING,
+  ) {
     const numericUserId = Number(userId);
     if (Number.isNaN(numericUserId)) {
       throw new BadRequestException('userId không hợp lệ');
@@ -223,7 +228,7 @@ export class BookingService {
     const booking = this.bookingRepository.create({
       note: dto.note,
       totalPrice: dto.totalPrice,
-      status: BookingStatus.PENDING,
+      status,
       user: { id: numericUserId } as any,
       supperCourt: { id: supperCourtId } as any,
       expiredAt: new Date(Date.now() + 7 * 60 * 1000),
@@ -375,12 +380,76 @@ export class BookingService {
       queryBuilder.distinct(true);
     }
 
+    queryBuilder.andWhere(
+      '(booking.status != :pending OR booking.imgBill IS NOT NULL OR booking.expiredAt > :now)',
+      {
+        pending: BookingStatus.PENDING,
+        now: new Date(),
+      },
+    );
+
+    queryBuilder.andWhere('booking.status IN (:...statuses)', {
+      statuses: [
+        BookingStatus.PENDING,
+        BookingStatus.CONFIRMED,
+        BookingStatus.OUT_OF_SYSTEM,
+      ],
+    });
+
     const data = await queryBuilder
       .orderBy('booking.createdAt', 'DESC')
       .getMany();
     return plainToInstance(ListBookingResponseDto, data, {
       excludeExtraneousValues: true,
     });
+  }
+
+  async listAllForOwner(ownerId: string, query: ListOwnerBookingQueryDto) {
+    const qb = this.bookingRepository
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.supperCourt', 'supperCourt')
+      .leftJoinAndSelect('booking.items', 'items')
+      .leftJoinAndSelect('items.subCourt', 'subCourt')
+      .leftJoinAndSelect('booking.user', 'user')
+      .leftJoin('supperCourt.user', 'owner')
+      .where('owner.id = :ownerId', { ownerId: Number(ownerId) });
+
+    if (query.status) {
+      qb.andWhere('booking.status = :status', { status: query.status });
+    }
+
+    if (query.startDate) {
+      const start = new Date(`${query.startDate}T00:00:00.000Z`);
+      qb.andWhere('booking.createdAt >= :startDate', { startDate: start });
+    }
+
+    if (query.endDate) {
+      const end = new Date(`${query.endDate}T23:59:59.999Z`);
+      qb.andWhere('booking.createdAt <= :endDate', { endDate: end });
+    }
+
+    const page = Number(query.page ?? 1);
+    const limit = Number(query.limit ?? 20);
+    const safePage = page < 1 ? 1 : page;
+    const safeLimit = limit < 1 ? 20 : limit;
+
+    const totalCount = await qb.clone().getCount();
+    const data = await qb
+      .orderBy('booking.createdAt', 'DESC')
+      .skip((safePage - 1) * safeLimit)
+      .take(safeLimit)
+      .getMany();
+
+    return {
+      data: plainToInstance(ListBookingResponseDto, data, {
+        excludeExtraneousValues: true,
+      }),
+      meta: {
+        page: safePage,
+        limit: safeLimit,
+        total: totalCount,
+      },
+    };
   }
 
   private async ensureOwnerAccess(ownerId: string, bookingId: string) {
@@ -416,6 +485,7 @@ export class BookingService {
       .leftJoin('supperCourt.user', 'owner')
       .where('booking.id = :id', { id: numericBookingId })
       .andWhere('owner.id = :ownerId', { ownerId: Number(ownerId) })
+
       .getOne();
 
     if (!booking) {
@@ -433,7 +503,22 @@ export class BookingService {
     dto: UpdateBookingStatusDto,
   ) {
     const booking = await this.ensureOwnerAccess(ownerId, bookingId);
+    if (booking.expiredAt && booking.expiredAt.getTime() < Date.now()) {
+      throw new BadRequestException(
+        'Không thể cập nhật booking đã hết hạn (expiredAt nhỏ hơn thời điểm hiện tại)',
+      );
+    }
+    if (booking.status === BookingStatus.OUT_OF_SYSTEM) {
+      if (dto.status !== BookingStatus.REJECTED) {
+        throw new BadRequestException(
+          'Chỉ được chuyển booking out_of_system sang rejected để giải phóng slot',
+        );
+      }
+    }
     booking.status = dto.status;
+    if (dto.status === BookingStatus.REJECTED) {
+      booking.expiredAt = booking.createdAt;
+    }
     return this.bookingRepository.save(booking);
   }
 

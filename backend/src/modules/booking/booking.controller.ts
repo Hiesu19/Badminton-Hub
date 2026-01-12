@@ -26,6 +26,7 @@ import {
   ListBookingQueryDto,
   ListBookingResponseDto,
 } from './dto/list-booking-query.dto';
+import { ListOwnerBookingQueryDto } from './dto/list-owner-booking-query.dto';
 import { BookingDetailResponseDto } from './dto/booking-detail-response.dto';
 import { ListMyBookingByDateDto } from './dto/list-my-booking-by-date.dto';
 
@@ -120,6 +121,21 @@ export class BookingController {
     const data = await this.bookingService.listByOwner(req.user.id, query.date);
     console.log(data);
     return data;
+  }
+
+  @Get('owner-all')
+  @OwnerAuth()
+  @CustomResponse(ListBookingResponseDto, {
+    message: 'Lấy toàn bộ booking của owner',
+    description:
+      '[owner] Danh sách booking của owner lọc theo trạng thái và khoảng thời gian tạo',
+    isPagination: true,
+  })
+  async listAllOwnerBookings(
+    @Req() req: Request & { user?: any },
+    @Query() query: ListOwnerBookingQueryDto,
+  ) {
+    return this.bookingService.listAllForOwner(req.user.id, query);
   }
 
   @Get('owner/:bookingId')
