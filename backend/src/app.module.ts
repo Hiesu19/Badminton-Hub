@@ -10,6 +10,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { BookingModule } from './modules/booking/booking.module';
 import { SupperCourtModule } from './modules/supper-court/supper-court.module';
 import { OwnerModule } from './modules/owner/owner.module';
+import { SendMqttModule } from './modules/send-mqtt/sendMqtt.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { OwnerModule } from './modules/owner/owner.module';
     BookingModule,
     SupperCourtModule,
     OwnerModule,
+    SendMqttModule,
   ],
   controllers: [],
   providers: [ResponseInterceptor],

@@ -3,6 +3,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import RequestPageIcon from '@mui/icons-material/RequestPage';
 import BusinessIcon from '@mui/icons-material/Business';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
+import DeviceHubIcon from '@mui/icons-material/DeviceHub';
 
 export const sidebarItemsClient = [
   { text: 'Trang chủ', icon: HomeIcon, path: '/' },
@@ -18,6 +19,7 @@ export const sidebarItemsOwner = [
   { text: 'Quản lý đặt sân', icon: DashboardIcon, path: '/bookings' },
   { text: 'Khoá sân', icon: BusinessIcon, path: '/lock-court' },
   { text: 'Hình ảnh', icon: PhotoLibraryIcon, path: '/gallery' },
+  { text: 'MQTT Key', icon: DeviceHubIcon, path: '/device-key' },
 ];
 
 export const sidebarItemsAdmin = [

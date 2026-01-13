@@ -79,7 +79,6 @@ export class BookingController {
       dto.page,
       dto.limit,
     );
-    console.log(data);
     return data;
   }
 
@@ -119,7 +118,6 @@ export class BookingController {
     @Query() query: ListBookingQueryDto,
   ) {
     const data = await this.bookingService.listByOwner(req.user.id, query.date);
-    console.log(data);
     return data;
   }
 

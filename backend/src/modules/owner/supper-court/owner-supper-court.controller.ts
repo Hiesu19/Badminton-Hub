@@ -18,6 +18,7 @@ import { UpdateOwnerPriceDto } from './dto/update-owner-price.dto';
 import { ListPricesQueryDto } from './dto/list-prices-query.dto';
 import { CopyPricesDto } from './dto/copy-prices.dto';
 import { UpdateOwnerBulkPriceDto } from './dto/update-owner-bulk-price.dto';
+import { DeviceKeyResponseDto } from './dto/device-key-response.dto';
 
 @Controller('/owner/supper-court')
 @ApiTags('Owner - Supper Court')
@@ -113,5 +114,23 @@ export class OwnerSupperCourtController {
       dto.endTime,
       dto.pricePerHour,
     );
+  }
+
+  @Get('device-key')
+  @CustomResponse(DeviceKeyResponseDto, {
+    message: 'Lấy device key',
+    description: '[owner] Lấy key thiết bị kết nối MQTT',
+  })
+  async getDeviceKey(@Req() req: any) {
+    return this.ownerSupperCourtService.getDeviceKey(req.user.id);
+  }
+
+  @Patch('device-key')
+  @CustomResponse(DeviceKeyResponseDto, {
+    message: 'Tạo device key mới',
+    description: '[owner] Sinh lại key thiết bị để dùng trong IOT',
+  })
+  async regenerateDeviceKey(@Req() req: any) {
+    return this.ownerSupperCourtService.regenerateDeviceKey(req.user.id);
   }
 }

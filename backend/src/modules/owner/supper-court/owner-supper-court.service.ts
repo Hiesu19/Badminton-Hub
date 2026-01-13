@@ -9,6 +9,8 @@ import { SupperCourtEntity } from '../../../database/entities/supper-court.entit
 import { SupperCourtPriceEntity } from '../../../database/entities/price-court.entity';
 import { UpdateOwnerSupperCourtDto } from './dto/update-owner-supper-court.dto';
 import { UpdateOwnerPriceDto } from './dto/update-owner-price.dto';
+import { DeviceKeyResponseDto } from './dto/device-key-response.dto';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class OwnerSupperCourtService {
@@ -74,6 +76,35 @@ export class OwnerSupperCourtService {
     await this.supperCourtRepository.save(court);
 
     return court;
+  }
+
+  async getDeviceKey(ownerId: string): Promise<DeviceKeyResponseDto> {
+    const court = await this.supperCourtRepository.findOne({
+      where: { user: { id: Number(ownerId) } as any },
+    });
+    if (!court) {
+      throw new NotFoundException('Bạn chưa có cụm sân nào');
+    }
+    return {
+      deviceKey: court.deviceKey ?? null,
+      supperCourtId: court.id,
+    };
+  }
+
+  async regenerateDeviceKey(ownerId: string): Promise<DeviceKeyResponseDto> {
+    const court = await this.supperCourtRepository.findOne({
+      where: { user: { id: Number(ownerId) } as any },
+    });
+    if (!court) {
+      throw new NotFoundException('Bạn chưa có cụm sân nào');
+    }
+    const key = randomBytes(8).toString('hex');
+    court.deviceKey = key;
+    await this.supperCourtRepository.save(court);
+    return {
+      deviceKey: key,
+      supperCourtId: court.id,
+    };
   }
 
   // ---------- Bảng giá ----------

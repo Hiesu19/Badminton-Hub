@@ -16,6 +16,7 @@ import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { ListBookingResponseDto } from './dto/list-booking-query.dto';
 import { ListOwnerBookingQueryDto } from './dto/list-owner-booking-query.dto';
 import { plainToInstance } from 'class-transformer';
+import { SendMqttService } from '../send-mqtt/sendMqtt.service';
 
 @Injectable()
 export class BookingService {
@@ -26,6 +27,7 @@ export class BookingService {
     private readonly bookingItemRepository: Repository<BookingItemEntity>,
     @InjectRepository(SubCourtEntity)
     private readonly subCourtRepository: Repository<SubCourtEntity>,
+    private readonly sendMqttService: SendMqttService,
   ) {}
 
   private readonly logger = new Logger(BookingService.name);
@@ -261,6 +263,8 @@ export class BookingService {
       relations: ['items', 'items.subCourt', 'supperCourt', 'user'],
     });
 
+    await this.scheduleLightsForBooking(fresh);
+
     return {
       id: fresh.id,
       note: fresh.note,
@@ -290,7 +294,6 @@ export class BookingService {
       relations: ['user', 'items'],
       where: { id: numericBookingId },
     });
-    console.log(booking?.user?.id, numericUserId);
 
     if (!booking || Number(booking.user?.id) !== numericUserId) {
       throw new NotFoundException('Booking không tồn tại.');
@@ -396,7 +399,6 @@ export class BookingService {
           'Ngày không hợp lệ, định dạng YYYY-MM-DD (ví dụ: 2026-01-15)',
         );
       }
-      // Filter items theo date và chỉ lấy booking có ít nhất một item với date đó
       queryBuilder.andWhere('items.date = :date', { date: normalizedDate });
       queryBuilder.distinct(true);
     }
@@ -478,6 +480,8 @@ export class BookingService {
     const booking = await this.bookingRepository
       .createQueryBuilder('booking')
       .leftJoinAndSelect('booking.supperCourt', 'supperCourt')
+      .leftJoinAndSelect('booking.items', 'items')
+      .leftJoinAndSelect('items.subCourt', 'subCourt')
       .leftJoin('supperCourt.user', 'owner')
       .where('booking.id = :id', { id: numericBookingId })
       .andWhere('owner.id = :ownerId', { ownerId: Number(ownerId) })
@@ -540,7 +544,12 @@ export class BookingService {
     if (dto.status === BookingStatus.REJECTED) {
       booking.expiredAt = booking.createdAt;
     }
-    return this.bookingRepository.save(booking);
+    const saved = await this.bookingRepository.save(booking);
+    this.logger.log(
+      `Scheduling MQTT for owner status update booking=${saved.id}`,
+    );
+    await this.scheduleLightsForBooking(saved);
+    return saved;
   }
 
   async listAllForAdmin(date?: string) {
@@ -551,7 +560,6 @@ export class BookingService {
       .leftJoinAndSelect('booking.supperCourt', 'supperCourt')
       .leftJoinAndSelect('booking.user', 'user');
 
-    // Nếu có filter theo ngày, chỉ lấy booking có items với date đó
     if (date) {
       const normalizedDate = date.trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
@@ -564,6 +572,52 @@ export class BookingService {
     }
 
     return queryBuilder.orderBy('booking.createdAt', 'DESC').getMany();
+  }
+
+  private async scheduleLightsForBooking(booking: BookingEntity) {
+    if (
+      booking.status !== BookingStatus.CONFIRMED &&
+      booking.status !== BookingStatus.OUT_OF_SYSTEM
+    ) {
+      return;
+    }
+
+    if (!booking.items?.length || !booking.supperCourt) {
+      return;
+    }
+
+    const fieldId = booking.supperCourt.id.toString();
+    const deviceKey = booking.supperCourt.deviceKey;
+    if (!deviceKey) {
+      this.logger.warn(
+        `Supper court ${booking.supperCourt.id} missing deviceKey, skip MQTT`,
+      );
+      return;
+    }
+
+    this.logger.log(
+      `Queueing lighting jobs for booking=${booking.id} field=${fieldId} deviceKey=${deviceKey}`,
+    );
+
+    await Promise.all(
+      booking.items
+        .filter((item) => item.subCourt)
+        .map((item) => {
+          const start = this.toDateTime(item.date, item.startTime);
+          const end = this.toDateTime(item.date, item.endTime);
+          this.logger.log(
+            ` -> light job booking=${booking.id} subCourt=${item.subCourt.id} start=${start.toISOString()} end=${end.toISOString()}`,
+          );
+          return this.sendMqttService.scheduleLightCycle(
+            booking.id.toString(),
+            fieldId,
+            item.subCourt.id.toString(),
+            start,
+            end,
+            deviceKey,
+          );
+        }),
+    );
   }
 
   async getById(bookingId: string) {

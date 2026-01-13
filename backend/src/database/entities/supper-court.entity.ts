@@ -85,6 +85,9 @@ export class SupperCourtEntity {
   })
   updatedAt: Date;
 
+  @Column({ name: 'device_key', type: 'varchar', length: 255, nullable: true })
+  deviceKey?: string = "hieuDepTrai";
+
   // -----------------------------
   @OneToMany(() => ImageEntity, (image) => image.supperCourt)
   images: ImageEntity[];

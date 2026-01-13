@@ -7,6 +7,7 @@ import { BookingItemEntity } from '../../database/entities/booking-item.entity';
 import { SubCourtEntity } from '../../database/entities/sub-court.entity';
 import { UploadModule } from '../s3/upload.module';
 import { JwtModule } from '@nestjs/jwt';
+import { SendMqttModule } from '../send-mqtt/sendMqtt.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { JwtModule } from '@nestjs/jwt';
     ]),
     UploadModule,
     JwtModule,
+    SendMqttModule,
   ],
   controllers: [BookingController],
   providers: [BookingService],

@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@nestjs/bullmq": "^11.0.4",
+    "bullmq": "^5.66.5",
+    "mqtt": "^5.14.1",
+    "nest-commander": "^3.20.1"
+  }
+}
