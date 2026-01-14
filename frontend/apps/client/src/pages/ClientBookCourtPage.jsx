@@ -533,6 +533,9 @@ const ClientBookCourtPage = () => {
               Lưu ý:
             </Typography>
             <Typography variant="body2" sx={{ color: '#4b5563', fontSize: 12 }}>
+              - Bạn phải chọn cụm sân bên Tab map trước khi đặt sân.
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#4b5563', fontSize: 12 }}>
               - Vui lòng đặt liền, không để khoảng trống giữa các ca.
             </Typography>
             <Typography variant="body2" sx={{ color: '#4b5563', fontSize: 12 }}>

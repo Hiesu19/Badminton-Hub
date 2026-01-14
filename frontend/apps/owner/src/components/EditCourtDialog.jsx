@@ -11,11 +11,17 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { updateMyCourt } from '../services/ownerCourtService.js';
+import { uploadImageWithPresignedKey } from '@booking/shared/api/uploadImage.js';
 
 /**
  * Dialog chỉnh sửa thông tin cụm sân
  */
-export default function EditCourtDialog({ open, onClose, courtData, onSuccess }) {
+export default function EditCourtDialog({
+  open,
+  onClose,
+  courtData,
+  onSuccess,
+}) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -25,6 +31,8 @@ export default function EditCourtDialog({ open, onClose, courtData, onSuccess })
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [bannerError, setBannerError] = useState('');
 
   useEffect(() => {
     if (courtData) {
@@ -118,6 +126,53 @@ export default function EditCourtDialog({ open, onClose, courtData, onSuccess })
               fullWidth
               helperText="Link đến hình ảnh cụm sân"
             />
+            <Box>
+              <Button
+                component="label"
+                variant="outlined"
+                size="small"
+                disabled={!courtData?.id || bannerUploading}
+                sx={{ textTransform: 'none' }}
+              >
+                {bannerUploading ? 'Đang tải...' : 'Tải banner lên từ thiết bị'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  hidden
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file || !courtData?.id) return;
+                    setBannerError('');
+                    setBannerUploading(true);
+                    try {
+                      const res = await uploadImageWithPresignedKey({
+                        type: 'supperCourtBanner',
+                        file,
+                        supperCourtId: String(courtData.id),
+                      });
+                      setFormData((prev) => ({
+                        ...prev,
+                        imageUrl: res.publicUrl ?? prev.imageUrl,
+                      }));
+                    } catch (err) {
+                      setBannerError(
+                        err?.message ||
+                          err?.response?.data?.message ||
+                          'Không thể tải ảnh lên. Vui lòng thử lại.',
+                      );
+                    } finally {
+                      setBannerUploading(false);
+                      event.target.value = '';
+                    }
+                  }}
+                />
+              </Button>
+              {bannerError && (
+                <Alert severity="warning" sx={{ mt: 1 }}>
+                  {bannerError}
+                </Alert>
+              )}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -140,4 +195,3 @@ export default function EditCourtDialog({ open, onClose, courtData, onSuccess })
     </Dialog>
   );
 }
-

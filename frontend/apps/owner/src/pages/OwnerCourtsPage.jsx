@@ -180,11 +180,11 @@ export default function OwnerCourtsPage() {
                     </Typography>
                   </Box>
                   <Chip
-                    label="Đang hoạt động"
+                    label={courtData.status == "active" ? "Đang hoạt động" : "Tạm ngưng hoạt động"}
                     size="small"
                     sx={{
-                      bgcolor: '#dcfce7',
-                      color: '#15803d',
+                      bgcolor: courtData.status == "active" ? '#dcfce7' : '#fee2e2',
+                      color: courtData.status == "active" ? '#15803d' : '#b91c1c',
                       fontWeight: 600,
                     }}
                   />

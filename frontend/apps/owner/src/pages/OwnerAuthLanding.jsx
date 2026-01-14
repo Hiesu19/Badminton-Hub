@@ -200,10 +200,6 @@ export default function OwnerAuthLanding() {
                   Bạn đã đăng nhập với vai trò{' '}
                   <strong>{sidebarUser.role}</strong>.
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                  Bạn có thể tiếp tục quản lý sân của mình hoặc đăng xuất khi
-                  cần.
-                </Typography>
               </Box>
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>

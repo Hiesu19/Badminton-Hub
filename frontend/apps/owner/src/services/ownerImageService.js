@@ -21,3 +21,9 @@ export const fetchOwnerImages = async ({ type, supperCourtId } = {}) => {
   const payload = data?.data ?? data;
   return Array.isArray(payload) ? payload : [];
 };
+
+export const requestBannerImageUpload = ({ supperCourtId, contentType }) =>
+  api.post('/uploads/presigned-supper-court-banner-image', {
+    supperCourtId,
+    contentType,
+  });
