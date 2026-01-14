@@ -78,32 +78,37 @@ export class OwnerSupperCourtService {
     return court;
   }
 
-  async getDeviceKey(ownerId: string): Promise<DeviceKeyResponseDto> {
+  private async findCourtWithSubCourts(ownerId: string) {
     const court = await this.supperCourtRepository.findOne({
       where: { user: { id: Number(ownerId) } as any },
+      relations: ['subCourts'],
     });
     if (!court) {
       throw new NotFoundException('Bạn chưa có cụm sân nào');
     }
+    return court;
+  }
+
+  async getDeviceKey(ownerId: string): Promise<DeviceKeyResponseDto> {
+    const court = await this.findCourtWithSubCourts(ownerId);
     return {
       deviceKey: court.deviceKey ?? null,
       supperCourtId: court.id,
+      subCourts:
+        court.subCourts?.map((sub) => ({ id: sub.id, name: sub.name })) ?? [],
     };
   }
 
   async regenerateDeviceKey(ownerId: string): Promise<DeviceKeyResponseDto> {
-    const court = await this.supperCourtRepository.findOne({
-      where: { user: { id: Number(ownerId) } as any },
-    });
-    if (!court) {
-      throw new NotFoundException('Bạn chưa có cụm sân nào');
-    }
+    const court = await this.findCourtWithSubCourts(ownerId);
     const key = randomBytes(8).toString('hex');
     court.deviceKey = key;
     await this.supperCourtRepository.save(court);
     return {
       deviceKey: key,
       supperCourtId: court.id,
+      subCourts:
+        court.subCourts?.map((sub) => ({ id: sub.id, name: sub.name })) ?? [],
     };
   }
 

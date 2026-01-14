@@ -540,6 +540,7 @@ export class BookingService {
         );
       }
     }
+    const prevStatus = booking.status;
     booking.status = dto.status;
     if (dto.status === BookingStatus.REJECTED) {
       booking.expiredAt = booking.createdAt;
@@ -549,6 +550,14 @@ export class BookingService {
       `Scheduling MQTT for owner status update booking=${saved.id}`,
     );
     await this.scheduleLightsForBooking(saved);
+    if (
+      dto.status === BookingStatus.REJECTED &&
+      [BookingStatus.CONFIRMED, BookingStatus.OUT_OF_SYSTEM].includes(
+        prevStatus,
+      )
+    ) {
+      await this.cancelLightsForBooking(saved);
+    }
     return saved;
   }
 
@@ -572,6 +581,22 @@ export class BookingService {
     }
 
     return queryBuilder.orderBy('booking.createdAt', 'DESC').getMany();
+  }
+
+  private async cancelLightsForBooking(booking: BookingEntity) {
+    if (!booking.items?.length) return;
+    const bookingId = booking.id.toString();
+    await Promise.all(
+      booking.items
+        .filter((item) => item.subCourt)
+        .map((item) =>
+          this.sendMqttService.cancelLightCycle(
+            bookingId,
+            item.subCourt.id.toString(),
+          ),
+        ),
+    );
+    this.logger.log(`Cancelled MQTT lighting jobs for booking=${bookingId}`);
   }
 
   private async scheduleLightsForBooking(booking: BookingEntity) {

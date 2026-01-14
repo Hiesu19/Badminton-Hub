@@ -37,6 +37,7 @@ export class SendMqttService {
 
   async sendLightMessage(message: LightMessagePayload) {
     const delay = this.getDelay(message.executeAt);
+    // const delay = 10000;
     const jobId = this.buildJobId(message);
 
     this.logger.log(`Schedule ${jobId} delay=${delay}ms`);

@@ -9,7 +9,14 @@ import {
   CircularProgress,
   Divider,
   IconButton,
+  Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -57,6 +64,7 @@ function DeviceKeyContent() {
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState(STATE_IDLE);
   const [message, setMessage] = useState('');
+  const [subCourts, setSubCourts] = useState([]);
 
   const loadKey = async () => {
     setLoading(true);
@@ -67,6 +75,7 @@ function DeviceKeyContent() {
       const payload = response.data?.data ?? response.data;
       setDeviceKey(payload?.deviceKey ?? '');
       setSupperCourtId(payload?.supperCourtId ?? null);
+      setSubCourts(payload?.subCourts ?? []);
     } catch (error) {
       setStatus(STATE_ERROR);
       setMessage(
@@ -92,6 +101,7 @@ function DeviceKeyContent() {
       setDeviceKey(payload?.deviceKey ?? '');
       setStatus(STATE_SUCCESS);
       setMessage('Đã tạo key mới thành công.');
+      setSubCourts(payload?.subCourts ?? []);
     } catch (error) {
       setStatus(STATE_ERROR);
       setMessage(
@@ -155,6 +165,32 @@ function DeviceKeyContent() {
                   Supper court ID
                 </Typography>
                 <Typography variant="body1">{supperCourtId ?? '—'}</Typography>
+              </Stack>
+
+              <Stack spacing={1} sx={{ mt: 3 }}>
+                <Typography variant="subtitle2">Danh sách sân con</Typography>
+                {subCourts?.length ? (
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>ID</TableCell>
+                          <TableCell>Tên sân con</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {subCourts.map((sub) => (
+                          <TableRow key={sub.id}>
+                            <TableCell>{sub.id}</TableCell>
+                            <TableCell>{sub.name}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Typography variant="body2">Chưa có sân con</Typography>
+                )}
               </Stack>
 
               <Stack
