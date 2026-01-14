@@ -164,12 +164,13 @@ export class BookingController {
 
   @Get('admin')
   @AdminAuth()
-  @CustomResponse([ListBookingResponseDto], {
+  @CustomResponse(ListBookingResponseDto, {
     message: 'Danh sách booking toàn hệ thống',
     description: '[admin] Danh sách booking (có thể lọc theo ngày)',
+    isPagination: true,
   })
   async listAdminBookings(@Query() query: ListBookingQueryDto) {
-    return this.bookingService.listAllForAdmin(query.date);
+    return this.bookingService.listAllForAdmin(query);
   }
 
   @Get('admin/:bookingId')

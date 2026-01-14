@@ -24,6 +24,21 @@ export default function Sidebar({
   const navigate = useNavigate();
   const initial = user?.name?.trim()?.[0]?.toUpperCase() || '?';
   const signedIn = Boolean(user && Object.keys(user).length > 0);
+  const [hasAuthToken, setHasAuthToken] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+    const refreshTokenState = () => {
+      setHasAuthToken(Boolean(localStorage.getItem('accessToken')));
+    };
+    refreshTokenState();
+    window.addEventListener('storage', refreshTokenState);
+    return () => window.removeEventListener('storage', refreshTokenState);
+  }, []);
+
+  const isLoggedIn = signedIn && hasAuthToken;
 
   const handleLogout = async () => {
     try {
@@ -139,7 +154,7 @@ export default function Sidebar({
         </List>
       </Box>
 
-      {signedIn && (
+      {isLoggedIn ? (
         <Box>
           <Divider sx={{ mb: 1.5 }} />
           <Button
@@ -157,6 +172,26 @@ export default function Sidebar({
             }}
           >
             Đăng xuất
+          </Button>
+        </Box>
+      ) : (
+        <Box>
+          <Divider sx={{ mb: 1.5 }} />
+          <Button
+            variant="text"
+            onClick={() => navigate('/login')}
+            fullWidth
+            sx={{
+              justifyContent: 'flex-start',
+              textTransform: 'none',
+              color: '#0f766e',
+              fontWeight: 600,
+              borderRadius: 999,
+              px: 1.5,
+              '&:hover': { bgcolor: '#ecfdf5' },
+            }}
+          >
+            Đăng nhập
           </Button>
         </Box>
       )}

@@ -561,26 +561,61 @@ export class BookingService {
     return saved;
   }
 
-  async listAllForAdmin(date?: string) {
-    const queryBuilder = this.bookingRepository
+  async listAllForAdmin(query: {
+    date?: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) {
+    const qb = this.bookingRepository
       .createQueryBuilder('booking')
       .leftJoinAndSelect('booking.items', 'items')
       .leftJoinAndSelect('items.subCourt', 'subCourt')
       .leftJoinAndSelect('booking.supperCourt', 'supperCourt')
       .leftJoinAndSelect('booking.user', 'user');
 
-    if (date) {
-      const normalizedDate = date.trim();
+    if (query.date) {
+      const normalizedDate = query.date.trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
         throw new BadRequestException(
           'Ngày không hợp lệ, định dạng YYYY-MM-DD (ví dụ: 2026-01-15)',
         );
       }
-      queryBuilder.where('items.date = :date', { date: normalizedDate });
-      queryBuilder.distinct(true);
+      qb.andWhere('items.date = :date', { date: normalizedDate });
+      qb.distinct(true);
     }
 
-    return queryBuilder.orderBy('booking.createdAt', 'DESC').getMany();
+    const normalizedSearch = query.search?.trim();
+    if (normalizedSearch) {
+      const searchTerm = `%${normalizedSearch.toLowerCase()}%`;
+      qb.andWhere(
+        '(LOWER(user.email) LIKE :search OR LOWER(supperCourt.name) LIKE :search)',
+        { search: searchTerm },
+      );
+    }
+
+    const pageNumber = Number(query.page ?? 1);
+    const limitNumber = Number(query.limit ?? 20);
+    const safePage = pageNumber < 1 ? 1 : pageNumber;
+    const safeLimit = limitNumber < 1 ? 20 : limitNumber;
+
+    const totalCount = await qb.clone().getCount();
+    const data = await qb
+      .orderBy('booking.createdAt', 'DESC')
+      .skip((safePage - 1) * safeLimit)
+      .take(safeLimit)
+      .getMany();
+
+    return {
+      data: plainToInstance(ListBookingResponseDto, data, {
+        excludeExtraneousValues: true,
+      }),
+      meta: {
+        page: safePage,
+        limit: safeLimit,
+        total: totalCount,
+      },
+    };
   }
 
   private async cancelLightsForBooking(booking: BookingEntity) {

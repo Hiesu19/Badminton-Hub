@@ -10,6 +10,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { BookingModule } from './modules/booking/booking.module';
 import { SupperCourtModule } from './modules/supper-court/supper-court.module';
 import { OwnerModule } from './modules/owner/owner.module';
+import { ReviewModule } from './modules/review/review.module';
 import { SendMqttModule } from './modules/send-mqtt/sendMqtt.module';
 
 @Module({
@@ -27,6 +28,7 @@ import { SendMqttModule } from './modules/send-mqtt/sendMqtt.module';
     BookingModule,
     SupperCourtModule,
     OwnerModule,
+    ReviewModule,
     SendMqttModule,
   ],
   controllers: [],

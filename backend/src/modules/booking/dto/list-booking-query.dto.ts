@@ -1,6 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Type } from 'class-transformer';
-import { IsDateString, IsOptional } from 'class-validator';
+import {
+  IsDateString,
+  IsInt,
+  Min,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class ListBookingQueryDto {
   @ApiPropertyOptional({
@@ -11,6 +17,34 @@ export class ListBookingQueryDto {
   @IsOptional()
   @IsDateString()
   date?: string;
+
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'Trang hiện tại (>= 1)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiPropertyOptional({
+    example: 20,
+    description: 'Số bản ghi mỗi trang (>= 1)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number;
+
+  @ApiPropertyOptional({
+    example: 'thaihieu1@gmail.com',
+    description: 'Search theo email user hoặc tên cụm sân',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
 }
 
 // Nested DTOs

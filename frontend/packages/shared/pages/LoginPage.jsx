@@ -114,40 +114,6 @@ export default function LoginPage({ defaultSite = null }) {
               >
                 Quên mật khẩu?
               </MuiLink>
-              <br />
-              <Typography variant="caption" sx={{ color: '#9ca3af' }}>
-                Bạn đang đăng nhập với tư cách:{' '}
-                <strong>
-                  {site === 'owner'
-                    ? 'Chủ sân'
-                    : site === 'admin'
-                    ? 'Quản trị viên'
-                    : 'Người chơi'}
-                </strong>
-              </Typography>
-              <Box sx={{ mt: 1 }}>
-                <MuiLink
-                  component={RouterLink}
-                  to="/login?site=client"
-                  sx={{ mx: 1, fontSize: 12 }}
-                >
-                  Client
-                </MuiLink>
-                <MuiLink
-                  component={RouterLink}
-                  to="/login?site=owner"
-                  sx={{ mx: 1, fontSize: 12 }}
-                >
-                  Owner
-                </MuiLink>
-                <MuiLink
-                  component={RouterLink}
-                  to="/login?site=admin"
-                  sx={{ mx: 1, fontSize: 12 }}
-                >
-                  Admin
-                </MuiLink>
-              </Box>
             </Box>
           </Box>
         </Box>

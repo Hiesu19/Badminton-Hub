@@ -4,6 +4,7 @@ import AdminHomePage from '../pages/AdminHomePage.jsx';
 import AdminUsersPage from '../pages/AdminUsersPage.jsx';
 import AdminProfilePage from '../pages/AdminProfilePage.jsx';
 import AdminSuperCourtsPage from '../pages/AdminSuperCourtsPage.jsx';
+import AdminBookingsPage from '../pages/AdminBookingsPage.jsx';
 import { RequireAdminAuth } from '@booking/shared/middleware/auth-role.js';
 
 export default function AppRoutes() {
@@ -32,6 +33,14 @@ export default function AppRoutes() {
         element={
           <RequireAdminAuth>
             <AdminSuperCourtsPage />
+          </RequireAdminAuth>
+        }
+      />
+      <Route
+        path="/bookings"
+        element={
+          <RequireAdminAuth>
+            <AdminBookingsPage />
           </RequireAdminAuth>
         }
       />

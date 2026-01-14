@@ -1,15 +1,29 @@
 import {
+  Alert,
+  Avatar,
   Box,
-  Typography,
-  Link,
+  Button,
   Chip,
   Divider,
-  Tabs,
+  Link,
+  Pagination,
+  Stack,
   Tab,
+  Tabs,
+  Typography,
   CircularProgress,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
+import Rating from '@mui/material/Rating';
+import { useState, useEffect, useCallback } from 'react';
 import CourtImageCarousel from './CourtImageCarousel.jsx';
+import ReviewDialog from '@booking/shared/components/ReviewDialog.jsx';
+import {
+  fetchReviewSummary,
+  fetchReviews,
+  createReview,
+} from '@booking/shared/services/reviewService.js';
+import { showErrorToast, showSuccessToast } from '@booking/shared';
+import RateReviewIcon from '@mui/icons-material/RateReview';
 
 const DAY_LABELS = {
   0: 'Chủ nhật',
@@ -22,6 +36,7 @@ const DAY_LABELS = {
 };
 
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const REVIEW_PAGE_SIZE = 4;
 
 const aliasDayMap = {
   MONDAY: 1,
@@ -115,8 +130,6 @@ export default function CourtInfoPanel({
   onRequestPrice,
 }) {
   const hasCourt = Boolean(court) && !loading;
-  const rating =
-    typeof court?.rating === 'number' ? court.rating.toFixed(1) : '4.9';
   const imageUrl =
     court?.imageUrl ??
     'https://image.kkday.com/v2/image/get/w_960,c_fit,q_55,wm_auto/s1.kkday.com/product_114032/20250611175426_6HEGI/png';
@@ -126,6 +139,130 @@ export default function CourtInfoPanel({
   const normalizedMatrix = buildNormalizedMatrix(priceMatrix);
   const activePriceDay = DAY_ORDER[priceDayIndex] ?? DAY_ORDER[0];
   const activeSlots = normalizedMatrix[activePriceDay] ?? [];
+
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviews, setReviews] = useState([]);
+  const [reviewTotal, setReviewTotal] = useState(0);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState(null);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSubmitError, setReviewSubmitError] = useState(null);
+  const [ratingSummary, setRatingSummary] = useState({
+    rating: null,
+    reviewCount: null,
+  });
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState(null);
+
+  const loadReviews = useCallback(
+    async (pageNumber = 1) => {
+      if (!court?.id) {
+        setReviews([]);
+        setReviewTotal(0);
+        setReviewsError(null);
+        return;
+      }
+      setReviewsLoading(true);
+      setReviewsError(null);
+      try {
+        const res = await fetchReviews({
+          supperCourtId: court.id,
+          page: pageNumber,
+          limit: REVIEW_PAGE_SIZE,
+        });
+        const payload = res.data?.data ?? [];
+        setReviews(payload);
+        const metadata =
+          res.data?.metadata?.meta ??
+          res.data?.meta ??
+          res.data?.metadata ??
+          null;
+        setReviewTotal(metadata?.total ?? payload.length);
+      } catch (err) {
+        setReviewsError(
+          err?.response?.data?.message ?? 'Không thể tải đánh giá sân.',
+        );
+      } finally {
+        setReviewsLoading(false);
+      }
+    },
+    [court?.id],
+  );
+
+  useEffect(() => {
+    if (!court?.id) {
+      setReviewPage(1);
+      setReviews([]);
+      setReviewTotal(0);
+      setReviewsError(null);
+      setRatingSummary({ rating: null, reviewCount: null });
+      setSummaryError(null);
+      return;
+    }
+    setReviewPage(1);
+    loadReviews(1);
+    let active = true;
+    const loadSummary = async () => {
+      setSummaryLoading(true);
+      setSummaryError(null);
+      try {
+        const res = await fetchReviewSummary(court.id);
+        if (!active) return;
+        const data = res.data?.data ?? {};
+        setRatingSummary({
+          rating: typeof data?.rating === 'number' ? data.rating : null,
+          reviewCount:
+            typeof data?.reviewCount === 'number' ? data.reviewCount : null,
+        });
+      } catch (err) {
+        if (active) {
+          setSummaryError(
+            err?.response?.data?.message ?? 'Không thể tải điểm đánh giá.',
+          );
+        }
+      } finally {
+        if (active) {
+          setSummaryLoading(false);
+        }
+      }
+    };
+    loadSummary();
+    return () => {
+      active = false;
+    };
+  }, [court?.id, loadReviews]);
+
+  const handleReviewPageChange = (_, value) => {
+    setReviewPage(value);
+    loadReviews(value);
+  };
+
+  const handleReviewSubmit = async ({ rating, comment }) => {
+    if (!court?.id) {
+      return;
+    }
+    setReviewSubmitting(true);
+    setReviewSubmitError(null);
+    try {
+      await createReview({
+        supperCourtId: court.id,
+        rating,
+        comment: comment || undefined,
+      });
+      showSuccessToast('Cảm ơn bạn đã gửi đánh giá!');
+      setReviewDialogOpen(false);
+      setReviewPage(1);
+      await loadReviews(1);
+    } catch (err) {
+      const message =
+        err?.response?.data?.message ?? 'Không thể gửi đánh giá lúc này.';
+      setReviewSubmitError(message);
+      showErrorToast(message);
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     setTabIndex(0);
@@ -141,6 +278,17 @@ export default function CourtInfoPanel({
       }
     }
   };
+
+  const resolvedRating =
+    typeof ratingSummary.rating === 'number'
+      ? ratingSummary.rating
+      : typeof court?.rating === 'number'
+      ? court.rating
+      : 4.9;
+  const rating =
+    typeof resolvedRating === 'number' ? resolvedRating.toFixed(1) : '4.9';
+  const displayedReviewCount =
+    ratingSummary.reviewCount ?? court?.reviewCount ?? 0;
 
   return (
     <Box
@@ -217,7 +365,22 @@ export default function CourtInfoPanel({
         <Tab label="Thông tin" value={0} />
         <Tab label="Bảng giá" value={1} />
         <Tab label="Ảnh" value={2} />
+        <Tab label="Đánh giá" value={3} />
       </Tabs>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+        <Button
+          disabled={!hasCourt}
+          size="small"
+          variant="outlined"
+          startIcon={<RateReviewIcon fontSize="small" />}
+          onClick={() => {
+            setReviewSubmitError(null);
+            setReviewDialogOpen(true);
+          }}
+        >
+          Gửi đánh giá
+        </Button>
+      </Box>
 
       <Box
         hidden={tabIndex !== 0}
@@ -243,8 +406,8 @@ export default function CourtInfoPanel({
             ⭐ {rating}
           </Typography>
           <Typography variant="body2" sx={{ color: '#6b7280' }}>
-            {court?.reviewCount
-              ? `${court.reviewCount} đánh giá`
+            {displayedReviewCount > 0
+              ? `${displayedReviewCount} đánh giá`
               : 'Chưa có đánh giá'}
           </Typography>
         </Box>
@@ -380,6 +543,105 @@ export default function CourtInfoPanel({
           </Typography>
         )}
       </Box>
+      <Box
+        hidden={tabIndex !== 3}
+        sx={{
+          display: tabIndex === 3 ? 'flex' : 'none',
+          flexDirection: 'column',
+          gap: 1.5,
+          mt: 2,
+        }}
+      >
+        {reviewsLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : reviewsError ? (
+          <Alert severity="warning">{reviewsError}</Alert>
+        ) : reviews.length === 0 ? (
+          <Typography variant="body2" sx={{ color: '#475467' }}>
+            Chưa có đánh giá nào cho sân này.
+          </Typography>
+        ) : (
+          <Stack spacing={1.5}>
+            {reviews.map((review) => (
+              <Box
+                key={review.id}
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: '#f8fafc',
+                }}
+              >
+                <Stack direction="row" spacing={2} alignItems="flex-start">
+                  <Avatar
+                    src={review.user?.avatarUrl}
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: '#dcfce7',
+                      color: '#166534',
+                    }}
+                  >
+                    {(review.user?.name ?? 'Người dùng')[0] ?? 'U'}
+                  </Avatar>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      spacing={1}
+                    >
+                      <Typography sx={{ fontWeight: 600 }}>
+                        {review.user?.name ??
+                          review.user?.email ??
+                          'Người dùng'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#475467' }}>
+                        {review.createdAt
+                          ? new Date(review.createdAt).toLocaleString('vi-VN', {
+                              dateStyle: 'short',
+                              timeStyle: 'short',
+                            })
+                          : '—'}
+                      </Typography>
+                    </Stack>
+                    <Rating value={review.rating ?? 0} size="small" readOnly />
+                    {review.comment && (
+                      <Typography
+                        variant="body2"
+                        sx={{ color: '#0f172a', mt: 0.5 }}
+                      >
+                        {review.comment}
+                      </Typography>
+                    )}
+                  </Box>
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+        )}
+        <Stack direction="row" justifyContent="flex-end">
+          <Pagination
+            size="small"
+            count={Math.max(1, Math.ceil(reviewTotal / REVIEW_PAGE_SIZE))}
+            page={reviewPage}
+            onChange={handleReviewPageChange}
+            color="primary"
+            disabled={reviewsLoading || reviewTotal <= REVIEW_PAGE_SIZE}
+          />
+        </Stack>
+      </Box>
+      <ReviewDialog
+        open={reviewDialogOpen}
+        onClose={() => {
+          setReviewDialogOpen(false);
+          setReviewSubmitError(null);
+        }}
+        onSubmit={handleReviewSubmit}
+        submitting={reviewSubmitting}
+        errorMessage={reviewSubmitError}
+      />
     </Box>
   );
 }
