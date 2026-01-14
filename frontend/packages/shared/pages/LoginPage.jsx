@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Box, Typography, Link as MuiLink } from '@mui/material';
+import { Box, Typography, Link as MuiLink, Button, Stack } from '@mui/material';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout.jsx';
 import Sidebar from '../layouts/Sidebar.jsx';
@@ -114,6 +114,57 @@ export default function LoginPage({ defaultSite = null }) {
               >
                 Quên mật khẩu?
               </MuiLink>
+              <Stack
+                direction="row"
+                spacing={1}
+                justifyContent="center"
+                sx={{ mt: 1 }}
+              >
+                {site === 'client' && (
+                  <Button
+                    component={RouterLink}
+                    to="/register"
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      px: 2,
+                      py: 0.5,
+                      borderRadius: 999,
+                      textTransform: 'none',
+                      borderColor: '#22c55e',
+                      color: '#166534',
+                      '&:hover': {
+                        borderColor: '#16a34a',
+                        bgcolor: '#ecfdf3',
+                      },
+                    }}
+                  >
+                    Đăng ký người chơi
+                  </Button>
+                )}
+                {site === 'owner' && (
+                  <Button
+                    component="a"
+                    href="mailto:thaihieu1919@gmail.com"
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      px: 2,
+                      py: 0.5,
+                      borderRadius: 999,
+                      textTransform: 'none',
+                      borderColor: '#1d4ed8',
+                      color: '#1d4ed8',
+                      '&:hover': {
+                        borderColor: '#1e40af',
+                        bgcolor: '#eff6ff',
+                      },
+                    }}
+                  >
+                    Đăng ký chủ sân
+                  </Button>
+                )}
+              </Stack>
             </Box>
           </Box>
         </Box>

@@ -185,10 +185,10 @@ export default function ClientMapsPage() {
                 variant="subtitle1"
                 sx={{ fontWeight: 700, color: '#0f172a' }}
               >
-                Tìm sân ưa thích
+                Tìm sân
               </Typography>
               <Typography variant="body2" sx={{ color: '#475467' }}>
-                Gõ tên sân hoặc quận để lọc nhanh.
+                Gõ tên sân tìm kiếm.
               </Typography>
               <TextField
                 fullWidth
@@ -236,7 +236,7 @@ export default function ClientMapsPage() {
                     >
                       <ListItemText
                         primary={court.name}
-                        secondary={`Lat: ${court.latitude}, Lng: ${court.longitude}`}
+                        secondary={`${court.address}`}
                         primaryTypographyProps={{
                           fontWeight: 600,
                         }}

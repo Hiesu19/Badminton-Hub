@@ -19,6 +19,7 @@ import CourtPriceDialog from '../components/CourtPriceDialog.jsx';
 import { useSearchParams } from 'react-router-dom';
 import {
   fetchPublicCourtCalendar,
+  fetchPublicCourtDetail,
   fetchPublicCourtPriceMatrix,
 } from '../services/publicCourtsService.js';
 import { createBooking } from '../services/bookingService.js';
@@ -134,6 +135,7 @@ const ClientBookCourtPage = () => {
       name,
     })),
   );
+  const [courtInfo, setCourtInfo] = useState(null);
 
   const getBaseStatusFromCalendar = (subCourtId, time) => {
     if (!bookingMatrix || !Array.isArray(bookingMatrix.subCourts)) {
@@ -226,6 +228,23 @@ const ClientBookCourtPage = () => {
 
     loadData();
   }, [courtIdParam, selectedDate]);
+
+  useEffect(() => {
+    if (!courtIdParam) {
+      setCourtInfo(null);
+      return;
+    }
+    const loadCourtInfo = async () => {
+      try {
+        const detail = await fetchPublicCourtDetail(courtIdParam);
+        setCourtInfo(detail);
+      } catch (error) {
+        console.error('Không thể tải thông tin cụm sân:', error);
+        setCourtInfo(null);
+      }
+    };
+    loadCourtInfo();
+  }, [courtIdParam]);
 
   const handleBooking = () => {
     const items = buildBookingItemsFromSelectedSlots(
@@ -514,13 +533,10 @@ const ClientBookCourtPage = () => {
               Lưu ý:
             </Typography>
             <Typography variant="body2" sx={{ color: '#4b5563', fontSize: 12 }}>
-              - Thứ 7 + CN đặt tối thiểu 2 tiếng.
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#4b5563', fontSize: 12 }}>
               - Vui lòng đặt liền, không để khoảng trống giữa các ca.
             </Typography>
             <Typography variant="body2" sx={{ color: '#4b5563', fontSize: 12 }}>
-              - Hotline: 0965826481 - Zalo: 0964883235
+              - Hotline/Zalo: {courtInfo?.phone ?? 'Đang cập nhật'}
             </Typography>
           </Box>
 

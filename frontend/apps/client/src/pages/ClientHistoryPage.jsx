@@ -94,73 +94,119 @@ const HistoryHeader = ({ selectedDate, onDateChange }) => (
   </Paper>
 );
 
-const BookingCard = ({ booking, onOpenDetail }) => (
-  <Paper
-    sx={{
-      mb: 1.5,
-      p: 2,
-      borderRadius: 2,
-      border: '1px solid #e5e7eb',
-      bgcolor: '#f8fafc',
-      boxShadow: '0 10px 30px rgba(15, 23, 42, 0.05)',
-    }}
-  >
-    <Stack
-      direction="row"
-      justifyContent="space-between"
-      alignItems="center"
-      spacing={2}
+const BookingCard = ({ booking, onOpenDetail }) => {
+  const primaryItem = booking.items?.[0];
+  const timeLabel =
+    primaryItem && primaryItem.startTime && primaryItem.endTime
+      ? `${primaryItem.startTime
+          .split(':')
+          .slice(0, 2)
+          .join(':')} - ${primaryItem.endTime.split(':').slice(0, 2).join(':')}`
+      : '—';
+  const totalItems = booking.items?.length ?? 0;
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        mb: 1.5,
+        p: 2.5,
+        borderRadius: 3,
+        border: '1px solid #e5e7eb',
+        bgcolor: '#fdfdfd',
+        boxShadow: '0 10px 25px rgba(15, 23, 42, 0.05)',
+      }}
     >
-      <Stack direction="column" spacing={0.5}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography
-            variant="subtitle2"
-            sx={{ fontWeight: 800, color: '#0f172a' }}
+      <Stack direction="row" justifyContent="space-between" spacing={2}>
+        <Stack spacing={1} flexGrow={1} sx={{ minWidth: 0 }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            flexWrap="wrap"
           >
-            #{booking.id}
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#475467' }}>
-            {booking.supperCourt?.name ?? '—'}
-          </Typography>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 800, color: '#0f172a' }}
+            >
+              #{booking.id}
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#475467' }} noWrap>
+              {booking.supperCourt?.name ?? '—'}
+            </Typography>
+          </Stack>
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            flexWrap="wrap"
+          >
+            <Typography variant="body2" sx={{ color: '#475467' }}>
+              Ngày: {primaryItem?.date ?? '—'}
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#475467' }}>
+              Giờ: {timeLabel}
+            </Typography>
+            <Chip
+              label={statusLabel(booking.status)}
+              color={statusColor(booking.status)}
+              size="small"
+              sx={{ fontWeight: 600 }}
+            />
+          </Stack>
         </Stack>
-        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+        <Stack spacing={1} alignItems="flex-end">
           <Typography variant="body2" sx={{ color: '#475467' }}>
-            Ngày: {booking.items?.[0]?.date ?? '—'}
+            Tổng tiền
           </Typography>
-          <Typography variant="body2" sx={{ color: '#475467' }}>
-            Tổng:{' '}
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
             {booking.totalPrice
               ? `${Number(booking.totalPrice).toLocaleString('vi-VN')} đ`
               : '—'}
           </Typography>
-          <Chip
-            label={statusLabel(booking.status)}
-            color={statusColor(booking.status)}
+          <Button
+            variant="contained"
             size="small"
-            sx={{ fontWeight: 600 }}
-          />
+            onClick={() => onOpenDetail(booking.id)}
+            sx={{
+              textTransform: 'none',
+              borderRadius: 999,
+              bgcolor: '#312e81',
+              '&:hover': {
+                bgcolor: '#2d2a78',
+              },
+            }}
+          >
+            Xem chi tiết
+          </Button>
         </Stack>
       </Stack>
-      <Box>
-        <Button
-          variant="contained"
-          size="small"
-          onClick={() => onOpenDetail(booking.id)}
-          sx={{
-            textTransform: 'none',
-            borderRadius: 999,
-            bgcolor: '#312e81',
-            '&:hover': {
-              bgcolor: '#2d2a78',
-            },
-          }}
-        >
-          Xem chi tiết
-        </Button>
-      </Box>
-    </Stack>
-  </Paper>
-);
+
+      {totalItems > 0 && (
+        <Stack direction="row" spacing={1} sx={{ mt: 1.5 }} flexWrap="wrap">
+          {booking.items.slice(0, 3).map((it, index) => (
+            <Chip
+              key={`${it.id ?? index}-${it.startTime}`}
+              label={`${it.subCourt?.name ?? `Sân ${it.courtId}`} · ${
+                it.startTime ?? '—'
+              } - ${it.endTime ?? '—'}`}
+              size="small"
+              sx={{ bgcolor: '#f1f5f9', borderRadius: 2 }}
+            />
+          ))}
+          {totalItems > 3 && (
+            <Typography
+              variant="caption"
+              sx={{ color: '#475467', alignSelf: 'center' }}
+            >
+              +{totalItems - 3} lượt khác
+            </Typography>
+          )}
+        </Stack>
+      )}
+    </Paper>
+  );
+};
 
 const BookingDetailDialog = ({
   open,
@@ -309,7 +355,7 @@ export default function ClientHistoryPage() {
       <Box
         sx={{
           minHeight: '100vh',
-          bgcolor: '#eef2ff',
+          bgcolor: '#ffffff',
           p: { xs: 2, md: 3 },
         }}
       >
@@ -324,14 +370,14 @@ export default function ClientHistoryPage() {
 
           <Paper
             sx={{
-              p: 3,
+              p: { xs: 2, md: 3 },
               borderRadius: 3,
               border: '1px solid #e5e7eb',
               bgcolor: '#ffffff',
-              boxShadow: '0 20px 50px rgba(15, 23, 42, 0.08)',
+              boxShadow: '0 20px 40px rgba(15, 23, 42, 0.05)',
             }}
           >
-            <Stack spacing={1.5}>
+            <Stack spacing={2}>
               {loading && bookings.length === 0 && (
                 <Typography variant="body2" sx={{ color: '#475467' }}>
                   Đang tải lịch sử đặt sân...
@@ -353,7 +399,7 @@ export default function ClientHistoryPage() {
 
             <Box
               sx={{
-                mt: 2,
+                mt: 3,
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',

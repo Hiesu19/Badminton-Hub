@@ -6,3 +6,5 @@ export const fetchReviews = (params) => api.get('/reviews', { params });
 
 export const fetchReviewSummary = (supperCourtId) =>
   api.get(`/reviews/supper-courts/${supperCourtId}/summary`);
+
+export const deleteReview = (reviewId) => api.delete(`/reviews/${reviewId}`);

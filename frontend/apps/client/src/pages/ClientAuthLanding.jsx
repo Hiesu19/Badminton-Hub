@@ -4,7 +4,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import RequestPageIcon from '@mui/icons-material/RequestPage';
 import { MainLayout, Sidebar } from '@booking/shared';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import '../App.css';
 
 export default function ClientAuthLanding() {
@@ -199,9 +199,6 @@ export default function ClientAuthLanding() {
                   Bạn đã đăng nhập với vai trò{' '}
                   <strong>{sidebarUser.role}</strong>.
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                  Bạn có thể tiếp tục sử dụng hệ thống hoặc đăng xuất khi cần.
-                </Typography>
               </Box>
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
@@ -293,6 +290,20 @@ export default function ClientAuthLanding() {
                   Đăng ký tài khoản
                 </Button>
               </Stack>
+              <Typography
+                variant="body2"
+                component={RouterLink}
+                to="/register"
+                sx={{
+                  mt: 1,
+                  display: 'inline-block',
+                  fontWeight: 600,
+                  color: '#166534',
+                  textDecoration: 'none',
+                }}
+              >
+                Chưa có tài khoản? Đăng ký ngay
+              </Typography>
             </Box>
           )}
         </Box>

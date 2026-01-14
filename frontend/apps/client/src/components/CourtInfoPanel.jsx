@@ -21,6 +21,7 @@ import {
   fetchReviewSummary,
   fetchReviews,
   createReview,
+  deleteReview,
 } from '@booking/shared/services/reviewService.js';
 import { showErrorToast, showSuccessToast } from '@booking/shared';
 import RateReviewIcon from '@mui/icons-material/RateReview';
@@ -154,6 +155,8 @@ export default function CourtInfoPanel({
   });
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [deletingReviewId, setDeletingReviewId] = useState(null);
 
   const loadReviews = useCallback(
     async (pageNumber = 1) => {
@@ -191,47 +194,65 @@ export default function CourtInfoPanel({
   );
 
   useEffect(() => {
+    const updateCurrentUser = () => {
+      try {
+        const raw = localStorage.getItem('user');
+        if (!raw) {
+          setCurrentUserId(null);
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        setCurrentUserId(parsed?.id ?? null);
+      } catch {
+        setCurrentUserId(null);
+      }
+    };
+    updateCurrentUser();
+    window.addEventListener('storage', updateCurrentUser);
+    return () => {
+      window.removeEventListener('storage', updateCurrentUser);
+    };
+  }, []);
+
+  const loadSummary = useCallback(async () => {
+    if (!court?.id) {
+      setRatingSummary({ rating: null, reviewCount: null });
+      setSummaryError(null);
+      setSummaryLoading(false);
+      return;
+    }
+    setSummaryLoading(true);
+    setSummaryError(null);
+    try {
+      const res = await fetchReviewSummary(court.id);
+      const data = res.data?.data ?? {};
+      setRatingSummary({
+        rating: typeof data?.rating === 'number' ? data.rating : null,
+        reviewCount:
+          typeof data?.reviewCount === 'number' ? data.reviewCount : null,
+      });
+    } catch (err) {
+      setSummaryError(
+        err?.response?.data?.message ?? 'Không thể tải điểm đánh giá.',
+      );
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [court?.id]);
+
+  useEffect(() => {
     if (!court?.id) {
       setReviewPage(1);
       setReviews([]);
       setReviewTotal(0);
       setReviewsError(null);
-      setRatingSummary({ rating: null, reviewCount: null });
       setSummaryError(null);
       return;
     }
     setReviewPage(1);
     loadReviews(1);
-    let active = true;
-    const loadSummary = async () => {
-      setSummaryLoading(true);
-      setSummaryError(null);
-      try {
-        const res = await fetchReviewSummary(court.id);
-        if (!active) return;
-        const data = res.data?.data ?? {};
-        setRatingSummary({
-          rating: typeof data?.rating === 'number' ? data.rating : null,
-          reviewCount:
-            typeof data?.reviewCount === 'number' ? data.reviewCount : null,
-        });
-      } catch (err) {
-        if (active) {
-          setSummaryError(
-            err?.response?.data?.message ?? 'Không thể tải điểm đánh giá.',
-          );
-        }
-      } finally {
-        if (active) {
-          setSummaryLoading(false);
-        }
-      }
-    };
     loadSummary();
-    return () => {
-      active = false;
-    };
-  }, [court?.id, loadReviews]);
+  }, [court?.id, loadReviews, loadSummary]);
 
   const handleReviewPageChange = (_, value) => {
     setReviewPage(value);
@@ -264,6 +285,25 @@ export default function CourtInfoPanel({
     }
   };
 
+  const handleDeleteReview = async (reviewId) => {
+    if (!reviewId) return;
+    const confirmed = window.confirm('Bạn có chắc muốn xóa đánh giá này?');
+    if (!confirmed) return;
+    setDeletingReviewId(reviewId);
+    try {
+      await deleteReview(reviewId);
+      showSuccessToast('Đánh giá đã được xóa.');
+      await loadReviews(reviewPage);
+      await loadSummary();
+    } catch (err) {
+      showErrorToast(
+        err?.response?.data?.message ?? 'Không thể xóa đánh giá lúc này.',
+      );
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
+
   useEffect(() => {
     setTabIndex(0);
     setPriceDayIndex(0);
@@ -284,7 +324,7 @@ export default function CourtInfoPanel({
       ? ratingSummary.rating
       : typeof court?.rating === 'number'
       ? court.rating
-      : 4.9;
+      : 5.0;
   const rating =
     typeof resolvedRating === 'number' ? resolvedRating.toFixed(1) : '4.9';
   const displayedReviewCount =
@@ -339,20 +379,29 @@ export default function CourtInfoPanel({
             {hasCourt ? court.name : 'Chọn một sân trên bản đồ để xem chi tiết'}
           </Typography>
         </Box>
-        <Box>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Chip
             label={hasCourt ? 'Đang xem' : 'Chưa chọn'}
             color={hasCourt ? 'success' : 'default'}
             size="small"
           />
-        </Box>
+          <Button
+            disabled={!hasCourt}
+            size="small"
+            variant="outlined"
+            startIcon={<RateReviewIcon fontSize="small" />}
+            onClick={() => {
+              setReviewSubmitError(null);
+              setReviewDialogOpen(true);
+            }}
+          >
+            Gửi đánh giá
+          </Button>
+        </Stack>
       </Box>
 
-      <Typography variant="body2" sx={{ color: '#374151', minHeight: 44 }}>
-        {loading
-          ? 'Đang tải chi tiết sân...'
-          : court?.description ??
-            'Thông tin chi tiết sẽ hiển thị khi bạn chọn một sân trong danh sách hoặc trên marker.'}
+      <Typography variant="body2" sx={{ color: '#374151', minHeight: 13 }}>
+        {loading ? 'Đang tải chi tiết sân...' : court?.description ?? ''}
       </Typography>
 
       <Tabs
@@ -367,21 +416,6 @@ export default function CourtInfoPanel({
         <Tab label="Ảnh" value={2} />
         <Tab label="Đánh giá" value={3} />
       </Tabs>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-        <Button
-          disabled={!hasCourt}
-          size="small"
-          variant="outlined"
-          startIcon={<RateReviewIcon fontSize="small" />}
-          onClick={() => {
-            setReviewSubmitError(null);
-            setReviewDialogOpen(true);
-          }}
-        >
-          Gửi đánh giá
-        </Button>
-      </Box>
-
       <Box
         hidden={tabIndex !== 0}
         sx={{
@@ -423,12 +457,6 @@ export default function CourtInfoPanel({
           </Typography>
           <Typography variant="body2" sx={{ color: '#374151' }}>
             <Box component="span" sx={{ fontWeight: 700 }}>
-              Giờ hoạt động:{' '}
-            </Box>
-            {court?.openingHours ?? '05:00 - 24:00'}
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#374151' }}>
-            <Box component="span" sx={{ fontWeight: 700 }}>
               Liên hệ:{' '}
             </Box>
             {court?.phone ?? 'Chưa cập nhật'}
@@ -442,7 +470,7 @@ export default function CourtInfoPanel({
             rel="noreferrer"
             sx={{ color: '#1d4ed8', fontWeight: 600 }}
           >
-            Link đặt sân online
+            Website
           </Link>
         )}
 
@@ -453,7 +481,7 @@ export default function CourtInfoPanel({
             rel="noreferrer"
             sx={{ color: '#1d4ed8', fontWeight: 600 }}
           >
-            Xem vị trí trên bản đồ
+            Xem vị trí trên Google Maps
           </Link>
         )}
       </Box>
@@ -564,61 +592,91 @@ export default function CourtInfoPanel({
           </Typography>
         ) : (
           <Stack spacing={1.5}>
-            {reviews.map((review) => (
-              <Box
-                key={review.id}
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: '#f8fafc',
-                }}
-              >
-                <Stack direction="row" spacing={2} alignItems="flex-start">
-                  <Avatar
-                    src={review.user?.avatarUrl}
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: '#dcfce7',
-                      color: '#166534',
-                    }}
-                  >
-                    {(review.user?.name ?? 'Người dùng')[0] ?? 'U'}
-                  </Avatar>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      spacing={1}
+            {reviews.map((review) => {
+              const canDeleteReview =
+                currentUserId &&
+                review.user?.id &&
+                String(review.user.id) === String(currentUserId);
+              return (
+                <Box
+                  key={review.id}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: '#f8fafc',
+                  }}
+                >
+                  <Stack direction="row" spacing={2} alignItems="flex-start">
+                    <Avatar
+                      src={review.user?.avatarUrl}
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: '#dcfce7',
+                        color: '#166534',
+                      }}
                     >
-                      <Typography sx={{ fontWeight: 600 }}>
-                        {review.user?.name ??
-                          review.user?.email ??
-                          'Người dùng'}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#475467' }}>
-                        {review.createdAt
-                          ? new Date(review.createdAt).toLocaleString('vi-VN', {
-                              dateStyle: 'short',
-                              timeStyle: 'short',
-                            })
-                          : '—'}
-                      </Typography>
-                    </Stack>
-                    <Rating value={review.rating ?? 0} size="small" readOnly />
-                    {review.comment && (
-                      <Typography
-                        variant="body2"
-                        sx={{ color: '#0f172a', mt: 0.5 }}
+                      {(review.user?.name ?? 'Người dùng')[0] ?? 'U'}
+                    </Avatar>
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        spacing={1}
                       >
-                        {review.comment}
-                      </Typography>
-                    )}
-                  </Box>
-                </Stack>
-              </Box>
-            ))}
+                        <Typography sx={{ fontWeight: 600 }}>
+                          {review.user?.name ??
+                            review.user?.email ??
+                            'Người dùng'}
+                        </Typography>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography
+                            variant="caption"
+                            sx={{ color: '#475467' }}
+                          >
+                            {review.createdAt
+                              ? new Date(review.createdAt).toLocaleString(
+                                  'vi-VN',
+                                  {
+                                    dateStyle: 'short',
+                                    timeStyle: 'short',
+                                  },
+                                )
+                              : '—'}
+                          </Typography>
+                          {canDeleteReview && (
+                            <Button
+                              size="small"
+                              color="error"
+                              variant="text"
+                              onClick={() => handleDeleteReview(review.id)}
+                              disabled={deletingReviewId === review.id}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Xóa
+                            </Button>
+                          )}
+                        </Stack>
+                      </Stack>
+                      <Rating
+                        value={review.rating ?? 0}
+                        size="small"
+                        readOnly
+                      />
+                      {review.comment && (
+                        <Typography
+                          variant="body2"
+                          sx={{ color: '#0f172a', mt: 0.5 }}
+                        >
+                          {review.comment}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Stack>
+                </Box>
+              );
+            })}
           </Stack>
         )}
         <Stack direction="row" justifyContent="flex-end">
