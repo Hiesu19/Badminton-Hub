@@ -35,12 +35,11 @@ import toast from 'react-hot-toast';
 import OwnerAllBookingsDialog from '../components/OwnerAllBookingsDialog.jsx';
 
 const TIMES = [];
-for (let h = 0; h <= 23; h += 1) {
+for (let h = 0; h < 24; h += 1) {
   const hh = String(h).padStart(2, '0');
   TIMES.push(`${hh}:00`);
   TIMES.push(`${hh}:30`);
 }
-TIMES.push('24:00');
 
 const parseTimeToMinutes = (hhmm) => {
   const [h, m] = hhmm.split(':').map((v) => parseInt(v, 10));

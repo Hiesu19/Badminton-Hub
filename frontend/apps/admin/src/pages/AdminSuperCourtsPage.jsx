@@ -58,6 +58,13 @@ export default function AdminSuperCourtsPage() {
     status: '',
     name: '',
     address: '',
+    phone: '',
+    email: '',
+    website: '',
+    description: '',
+    addressLink: '',
+    latitude: '',
+    longitude: '',
   });
   const [detailCourt, setDetailCourt] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -128,6 +135,13 @@ export default function AdminSuperCourtsPage() {
         status: court?.status || 'verifying',
         name: court?.name || '',
         address: court?.address || '',
+        phone: court?.phone ?? '',
+        email: court?.email ?? '',
+        website: court?.website ?? '',
+        description: court?.description ?? '',
+        addressLink: court?.addressLink ?? '',
+        latitude: court?.latitude ?? '',
+        longitude: court?.longitude ?? '',
       });
       setDialogOpen(true);
     } catch (err) {
@@ -359,6 +373,83 @@ export default function AdminSuperCourtsPage() {
                   }))
                 }
                 fullWidth
+              />
+              <TextField
+                label="Link Google Maps"
+                value={dialogForm.addressLink}
+                onChange={(e) =>
+                  setDialogForm((prev) => ({
+                    ...prev,
+                    addressLink: e.target.value,
+                  }))
+                }
+                fullWidth
+                sx={{ mt: 1 }}
+              />
+              <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+                <TextField
+                  label="Vĩ độ"
+                  value={dialogForm.latitude}
+                  onChange={(e) =>
+                    setDialogForm((prev) => ({
+                      ...prev,
+                      latitude: e.target.value,
+                    }))
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="Kinh độ"
+                  value={dialogForm.longitude}
+                  onChange={(e) =>
+                    setDialogForm((prev) => ({
+                      ...prev,
+                      longitude: e.target.value,
+                    }))
+                  }
+                  fullWidth
+                />
+              </Stack>
+              <TextField
+                label="Số điện thoại"
+                value={dialogForm.phone}
+                onChange={(e) =>
+                  setDialogForm((prev) => ({ ...prev, phone: e.target.value }))
+                }
+                fullWidth
+              />
+              <TextField
+                label="Email"
+                value={dialogForm.email}
+                onChange={(e) =>
+                  setDialogForm((prev) => ({ ...prev, email: e.target.value }))
+                }
+                type="email"
+                fullWidth
+              />
+              <TextField
+                label="Website"
+                value={dialogForm.website}
+                onChange={(e) =>
+                  setDialogForm((prev) => ({
+                    ...prev,
+                    website: e.target.value,
+                  }))
+                }
+                fullWidth
+              />
+              <TextField
+                label="Mô tả ngắn"
+                value={dialogForm.description}
+                onChange={(e) =>
+                  setDialogForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                fullWidth
+                multiline
+                rows={3}
               />
               <FormControl fullWidth>
                 <InputLabel>Trạng thái</InputLabel>
