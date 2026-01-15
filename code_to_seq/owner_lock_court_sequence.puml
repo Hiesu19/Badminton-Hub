@@ -1,0 +1,41 @@
+@startuml
+actor "Chủ sân" as Owner
+participant "Owner Portal" as Portal
+participant "Backend /owner/lock-court" as LockAPI
+participant "BookingService" as Booking
+database "MySQL" as DB
+participant "SendMqttService" as MqttSvc
+queue "BullMQ Queue" as Bull
+participant "SendMqttProcessor" as Worker
+participant "Thiết bị MQTT" as Device
+
+== Tạo booking OUT_OF_SYSTEM ==
+Owner -> Portal: Nhập thông tin khách ngoài hệ thống
+Portal -> LockAPI: POST /owner/lock-court (CreateBookingDto)
+LockAPI -> Booking: lockCourt(ownerId, dto)
+Booking -> DB: Xác thực subCourts + supperCourt
+Booking -> DB: Lưu booking status=OUT_OF_SYSTEM
+DB --> Booking: Booking + các items đã tạo
+Booking -> Booking: scheduleLightsForBooking()
+Booking -> MqttSvc: scheduleLightCycle(bookingId, deviceKey,...)
+
+== Lập lịch bật/tắt đèn ==
+MqttSvc -> Bull: Thêm light-message jobs (LIGHT_ON/OFF)
+... Đến giờ bật đèn ...
+Bull -> Worker: Giao job (LIGHT_ON)
+Worker -> Device: MQTT publish field/{supperCourtId}/{deviceKey}/light
+note right of Device
+  Payload: { cmd: ON, zone, bookingId }
+end note
+
+... Đến giờ tắt đèn ...
+Bull -> Worker: Giao job (LIGHT_OFF)
+Worker -> Device: MQTT publish cmd=OFF
+Device --> Worker: Xác nhận (Ack)
+
+== Phản hồi giao diện (UI) ==
+Booking --> LockAPI: Trả về Booking OUT_OF_SYSTEM
+LockAPI --> Portal: Thông tin booking + trạng thái
+Portal -> Owner: Hiển thị đã khóa slot cho khách ngoài
+
+@enduml

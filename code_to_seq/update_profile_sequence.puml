@@ -1,0 +1,31 @@
+@startuml
+actor "Người dùng" as User
+participant "Ứng dụng Client" as Client
+participant "Backend NestJS" as Backend
+participant "AWS S3" as S3
+
+== Lấy thông tin hiện tại ==
+User -> Client: Mở trang cập nhật profile
+Client -> Backend: GET /users/me
+Backend --> Client: Trả về MyProfileResponseDto
+
+== Lấy presigned avatar ==
+User -> Client: Chọn ảnh mới
+Client -> Backend: POST /uploads/presigned-avatar-image
+Backend --> Client: Presigned URL + objectKey
+
+== Upload ảnh lên S3 ==
+Client -> S3: PUT file ảnh bằng presigned URL
+S3 --> Client: 200 OK + etag
+
+== Cập nhật profile ==
+Client -> Backend: PATCH /users/me (avatarKey + thông tin cá nhân)
+Backend -> Backend: userService.updateMyProfile()
+note right of Backend
+  Backend xác thực request, cập nhật các field
+  Lưu avatarKey vừa upload vào hồ sơ user
+end note
+Backend --> Client: Thông báo cập nhật thành công
+Client -> User: Hiển thị thông tin mới
+
+@enduml

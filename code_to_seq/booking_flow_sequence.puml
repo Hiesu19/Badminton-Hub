@@ -1,0 +1,41 @@
+@startuml
+actor "Người dùng" as User
+participant "Ứng dụng Client" as Client
+participant "Backend NestJS" as Backend
+participant "Portal Chủ sân" as OwnerPortal
+participant "Hàng đợi MQTT" as MQTT
+
+== Chọn sân ==
+User -> Client: Chọn cụm sân và ngày
+Client -> Backend: GET /public/supper-courts
+Backend --> Client: Danh sách cụm sân
+Client -> Backend: GET /public/supper-courts/{id}/calendar/{date}
+Backend --> Client: Lịch trống theo slot
+
+== Đặt sân ==
+User -> Client: Xác nhận thông tin đặt
+Client -> Backend: POST /bookings
+Backend -> Backend: Kiểm tra slot + số dư
+Backend --> Client: Trả booking đang chờ + thông tin thanh toán
+
+== Gửi bill ==
+Client -> Backend: POST /bookings/{bookingId}/bill
+note right of Backend
+    API uploadBill nhận ảnh bill từ user và đợi chủ sân duyệt
+end note
+Backend --> Client: Ghi nhận trạng thái đợi duyệt
+
+== Chủ sân xác nhận ==
+OwnerPortal -> Backend: GET /bookings/owner?date=...
+Backend --> OwnerPortal: Danh sách booking chờ xử lý
+OwnerPortal -> Backend: PATCH /bookings/owner/{bookingId}/status
+Backend --> OwnerPortal: Trả trạng thái đã xác nhận
+Backend --> Client: Đẩy thông báo booking đã duyệt
+
+== Xử lý MQTT ==
+Backend -> MQTT: Publish booking.confirmed
+MQTT --> Backend: Ack + đưa vào queue
+MQTT --> OwnerPortal: Thông báo realtime
+MQTT --> Client: Cập nhật trạng thái đặt sân
+
+@enduml
