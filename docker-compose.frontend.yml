@@ -1,0 +1,22 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - '7001:4173' # admin
+      - '7002:4174' # client
+      - '7003:4175' # owner
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--spider',
+          '--quiet',
+          'http://localhost:4173/index.html',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
