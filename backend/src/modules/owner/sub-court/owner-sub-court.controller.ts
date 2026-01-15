@@ -4,6 +4,7 @@ import { OwnerSubCourtService } from './owner-sub-court.service';
 import { OwnerAuth } from 'src/shared/decorators/role-auth.decorator';
 import { CustomResponse } from 'src/shared/decorators/custom-response.decorator';
 import { CreateOwnerSubCourtDto } from './dto/create-owner-sub-court.dto';
+import { ToggleOwnerLightDto } from './dto/toggle-owner-light.dto';
 import { UpdateOwnerSubCourtDto } from './dto/update-owner-sub-court.dto';
 
 @Controller('/owner/sub-courts')
@@ -54,5 +55,19 @@ export class OwnerSubCourtController {
   })
   async deleteSubCourt(@Req() req: any, @Param('id') id: string) {
     return this.ownerSubCourtService.deleteSubCourt(req.user.id, id);
+  }
+
+  @Post(':id/light')
+  @CustomResponse('string', {
+    code: 200,
+    message: 'Gửi tín hiệu đèn thành công',
+    description: '[owner] Bật/tắt đèn sân con ngay lập tức',
+  })
+  async toggleLight(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: ToggleOwnerLightDto,
+  ) {
+    return this.ownerSubCourtService.toggleSubCourtLight(req.user.id, id, dto);
   }
 }

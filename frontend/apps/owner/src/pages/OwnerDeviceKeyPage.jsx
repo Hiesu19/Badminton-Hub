@@ -18,6 +18,10 @@ import {
   TableHead,
   TableRow,
   Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { SidebarPage } from '@booking/shared';
@@ -26,7 +30,8 @@ import {
   fetchOwnerDeviceKey,
   regenerateOwnerDeviceKey,
 } from '../services/ownerDeviceKeyService.js';
-
+import { toggleSubCourtLight } from '../services/subCourtsService.js';
+import { showSuccessToast, showErrorToast } from '@booking/shared';
 const STATE_IDLE = 'idle';
 const STATE_ERROR = 'error';
 const STATE_SUCCESS = 'success';
@@ -65,6 +70,7 @@ function DeviceKeyContent() {
   const [status, setStatus] = useState(STATE_IDLE);
   const [message, setMessage] = useState('');
   const [subCourts, setSubCourts] = useState([]);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
 
   const loadKey = async () => {
     setLoading(true);
@@ -75,7 +81,8 @@ function DeviceKeyContent() {
       const payload = response.data?.data ?? response.data;
       setDeviceKey(payload?.deviceKey ?? '');
       setSupperCourtId(payload?.supperCourtId ?? null);
-      setSubCourts(payload?.subCourts ?? []);
+      const courts = payload?.subCourts ?? [];
+      setSubCourts(courts);
     } catch (error) {
       setStatus(STATE_ERROR);
       setMessage(
@@ -101,7 +108,8 @@ function DeviceKeyContent() {
       setDeviceKey(payload?.deviceKey ?? '');
       setStatus(STATE_SUCCESS);
       setMessage('Đã tạo key mới thành công.');
-      setSubCourts(payload?.subCourts ?? []);
+      const courts = payload?.subCourts ?? [];
+      setSubCourts(courts);
     } catch (error) {
       setStatus(STATE_ERROR);
       setMessage(
@@ -113,15 +121,41 @@ function DeviceKeyContent() {
     }
   };
 
+  const handleLightAction = async (subCourtId, action) => {
+    setActionLoadingId(subCourtId);
+    try {
+      await toggleSubCourtLight(subCourtId, action);
+      setStatus(STATE_SUCCESS);
+      setMessage(`Đã gửi lệnh ${action.toUpperCase()} đèn thành công.`);
+      showSuccessToast(`Đã gửi lệnh ${action.toUpperCase()} đèn thành công.`);
+    } catch (error) {
+      setStatus(STATE_ERROR);
+      setMessage(
+        error?.response?.data?.message ||
+          'Không thể gửi lệnh điều khiển đèn. Vui lòng thử lại.',
+      );
+      showErrorToast(
+        error?.response?.data?.message ||
+          'Không thể gửi lệnh điều khiển đèn. Vui lòng thử lại.',
+      );
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
   const handleCopy = async () => {
     if (!deviceKey) return;
     try {
       await navigator.clipboard.writeText(deviceKey);
       setStatus(STATE_SUCCESS);
       setMessage('Đã sao chép key vào clipboard.');
+      showSuccessToast('Đã sao chép key vào clipboard.');
     } catch (error) {
       setStatus(STATE_ERROR);
       setMessage(
+        'Trình duyệt không cho phép sao chép. Vui lòng sao chép thủ công.',
+      );
+      showErrorToast(
         'Trình duyệt không cho phép sao chép. Vui lòng sao chép thủ công.',
       );
     }
@@ -176,6 +210,7 @@ function DeviceKeyContent() {
                         <TableRow>
                           <TableCell>ID</TableCell>
                           <TableCell>Tên sân con</TableCell>
+                          <TableCell align="right">Hành động</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -183,6 +218,36 @@ function DeviceKeyContent() {
                           <TableRow key={sub.id}>
                             <TableCell>{sub.id}</TableCell>
                             <TableCell>{sub.name}</TableCell>
+                            <TableCell align="right">
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                justifyContent="flex-end"
+                              >
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="success"
+                                  disabled={actionLoadingId === sub.id}
+                                  onClick={() =>
+                                    handleLightAction(sub.id, 'on')
+                                  }
+                                >
+                                  Bật
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="error"
+                                  disabled={actionLoadingId === sub.id}
+                                  onClick={() =>
+                                    handleLightAction(sub.id, 'off')
+                                  }
+                                >
+                                  Tắt
+                                </Button>
+                              </Stack>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

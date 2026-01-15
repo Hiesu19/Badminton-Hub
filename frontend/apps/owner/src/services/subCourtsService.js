@@ -37,3 +37,10 @@ export async function deleteSubCourt(id) {
   return payload;
 }
 
+export async function toggleSubCourtLight(id, action) {
+  const { data } = await api.post(`/owner/sub-courts/${id}/light`, {
+    action,
+  });
+  return data?.data ?? data;
+}
+

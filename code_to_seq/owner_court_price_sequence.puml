@@ -1,0 +1,63 @@
+@startuml
+actor "Chủ sân" as Owner
+participant "Portal Chủ sân" as Portal
+participant "Backend /owner/supper-court" as OwnerAPI
+database "Kho lưu trữ Cụm sân" as CourtRepo
+database "Kho lưu trữ Giá" as PriceRepo
+
+== Tải thông tin cụm sân ==
+Owner -> Portal: Mở trang quản lý cụm sân
+Portal -> OwnerAPI: GET /owner/supper-court/me
+OwnerAPI -> CourtRepo: findOne(ownerId)
+CourtRepo --> OwnerAPI: SupperCourtEntity
+OwnerAPI --> Portal: Thông tin cụm sân hiện tại
+Portal -> Owner: Điền dữ liệu vào form chỉnh sửa
+
+== Cập nhật cụm sân ==
+Owner -> Portal: Cập nhật mô tả, thông tin thanh toán
+Portal -> OwnerAPI: PATCH /owner/supper-court/me (UpdateOwnerSupperCourtDto)
+OwnerAPI -> CourtRepo: getMyCourtOrThrow(ownerId)
+OwnerAPI -> CourtRepo: save(court với các trường mới)
+CourtRepo --> OwnerAPI: SupperCourtEntity đã cập nhật
+OwnerAPI --> Portal: Phản hồi 200 + dữ liệu mới
+Portal -> Owner: Thông báo cập nhật thành công
+
+== Xem bảng giá theo thứ ==
+Owner -> Portal: Chọn thứ (0-6)
+Portal -> OwnerAPI: GET /owner/supper-court/prices?dayOfWeek=x
+OwnerAPI -> PriceRepo: find({ supperCourtId, dayOfWeek })
+PriceRepo --> OwnerAPI: Danh sách slot 30 phút
+OwnerAPI --> Portal: Mảng giá theo thứ
+Portal -> Owner: Giao diện hiển thị bảng giá
+
+== Cập nhật giá từng slot ==
+Owner -> Portal: Chỉnh sửa giá/giờ (pricePerHour) của slot
+Portal -> OwnerAPI: PATCH /owner/supper-court/prices/{priceId}
+OwnerAPI -> CourtRepo: getMyCourtOrThrow(ownerId)
+OwnerAPI -> PriceRepo: findOne(priceId, supperCourtId)
+PriceRepo --> OwnerAPI: SupperCourtPriceEntity
+OwnerAPI -> PriceRepo: save(giá/giờ mới)
+PriceRepo --> OwnerAPI: Slot đã được cập nhật
+OwnerAPI --> Portal: Thông báo "Cập nhật thành công"
+
+== Sao chép bảng giá sang thứ khác ==
+Owner -> Portal: Chọn ngày nguồn (From) và ngày đích (To)
+Portal -> OwnerAPI: POST /owner/supper-court/prices/copy
+OwnerAPI -> CourtRepo: getMyCourtOrThrow(ownerId)
+OwnerAPI -> PriceRepo: find(ngày nguồn)
+PriceRepo --> OwnerAPI: Danh sách giá nguồn
+OwnerAPI -> PriceRepo: remove(ngày đích hiện tại)
+OwnerAPI -> PriceRepo: save(tạo bản sao với dayOfWeek mới)
+OwnerAPI --> Portal: Tổng kết số lượng slot đã sao chép
+
+== Cập nhật hàng loạt theo khoảng giờ ==
+Owner -> Portal: Điền thứ, khung giờ 08:00-12:00, giá mới
+Portal -> OwnerAPI: POST /owner/supper-court/prices/bulk-update
+OwnerAPI -> CourtRepo: getMyCourtOrThrow(ownerId)
+OwnerAPI -> PriceRepo: find({dayOfWeek, start>=start, end<=end})
+PriceRepo --> OwnerAPI: Danh sách các slot mục tiêu
+OwnerAPI -> PriceRepo: save(tất cả pricePerHour = giá mới)
+OwnerAPI --> Portal: Thông điệp + số lượng slot đã cập nhật
+Portal -> Owner: Hiển thị kết quả + làm mới danh sách
+
+@enduml

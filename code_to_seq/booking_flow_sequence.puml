@@ -15,7 +15,7 @@ Backend --> Client: Lịch trống theo slot
 == Đặt sân ==
 User -> Client: Xác nhận thông tin đặt
 Client -> Backend: POST /bookings
-Backend -> Backend: Kiểm tra slot + số dư
+Backend -> Backend: Kiểm tra slot + số tiền cần thanh toán
 Backend --> Client: Trả booking đang chờ + thông tin thanh toán
 
 == Gửi bill ==

@@ -5,9 +5,14 @@ import { SupperCourtEntity } from '../../../database/entities/supper-court.entit
 import { OwnerSubCourtController } from './owner-sub-court.controller';
 import { OwnerSubCourtService } from './owner-sub-court.service';
 import { JwtModule } from '@nestjs/jwt';
+import { SendMqttModule } from '../../send-mqtt/sendMqtt.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SubCourtEntity, SupperCourtEntity]), JwtModule],
+  imports: [
+    TypeOrmModule.forFeature([SubCourtEntity, SupperCourtEntity]),
+    JwtModule,
+    SendMqttModule,
+  ],
   controllers: [OwnerSubCourtController],
   providers: [OwnerSubCourtService],
 })
