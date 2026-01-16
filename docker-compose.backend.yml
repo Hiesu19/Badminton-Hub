@@ -9,9 +9,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5000
-      DB_HOST: host.docker.internal
+      DB_HOST: localhost
       DB_PORT: 6001
-      REDIS_HOST: host.docker.internal
+      REDIS_HOST: localhost
       REDIS_PORT: 6002
     healthcheck:
       test: ['CMD', 'wget', '--spider', '--quiet', 'http://localhost:5000/api']
